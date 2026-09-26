@@ -19,7 +19,7 @@ export function LoginForm() {
 
     const supabase = createClient();
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: String(formData.get("email")),
+      email: `${String(formData.get("username")).trim()}@pieber.local`,
       password: String(formData.get("password")),
     });
 
@@ -36,8 +36,8 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <label htmlFor="email">Email</label>
-      <input id="email" name="email" type="email" required />
+      <label htmlFor="username">Username</label>
+      <input id="username" name="username" required />
 
       <label htmlFor="password">Password</label>
       <input id="password" name="password" type="password" required />
