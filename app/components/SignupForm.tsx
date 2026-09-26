@@ -10,11 +10,12 @@ export function SignupForm() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = event.currentTarget;
     setError(null);
     setMessage(null);
     setIsSubmitting(true);
 
-    const formData = new FormData(event.currentTarget);
+    const formData = new FormData(form);
     const supabase = createClient();
     const { error: signUpError } = await supabase.auth.signUp({
       email: String(formData.get("email")),
@@ -34,7 +35,7 @@ export function SignupForm() {
     }
 
     setMessage("Check your email to confirm your account.");
-    event.currentTarget.reset();
+    form.reset();
   }
 
   return (
