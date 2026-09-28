@@ -1,6 +1,6 @@
 "use server";
 
-import { openai } from "@ai-sdk/openai";
+import { google } from "@ai-sdk/google";
 import { generateText, Output } from "ai";
 import { z } from "zod";
 
@@ -66,7 +66,7 @@ export async function extractEvents(rawText: string) {
   }
 
   const { output: events } = await generateText({
-    model: openai("gpt-4o-mini"),
+    model: google("gemini-1.5-flash"),
     output: Output.array({
       element: schoolEventSchema,
       name: "schoolEvents",
