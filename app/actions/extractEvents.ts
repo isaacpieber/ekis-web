@@ -1,7 +1,7 @@
 "use server";
 
 import { google } from "@ai-sdk/google";
-import { generateText, Output } from "ai";
+import { generateObject } from "ai";
 import { z } from "zod";
 
 import { createClient } from "@/utils/supabase/server";
@@ -65,20 +65,20 @@ export async function extractEvents(rawText: string) {
     throw new Error("Only parents can extract and create school events.");
   }
 
-  const { output: events } = await generateText({
+  const today = new Date().toISOString().split("T")[0];
+  const { object: events } = await generateObject({
     model: google("gemini-1.5-flash"),
-    output: Output.array({
-      element: schoolEventSchema,
-      name: "schoolEvents",
-      description: "Distinct upcoming events extracted from the newsletter.",
-    }),
+    output: "array",
+    schema: schoolEventSchema,
     system: `You are a scheduling assistant for a family calendar.
 
 Extract every distinct upcoming event from the supplied school newsletter. Include
-only events with a clear date. If a year is not stated, assume the year is 2026.
-Use YYYY-MM-DD dates and 24-hour HH:MM times. Set is_all_day to true when no
-specific start or end time is given. Use "Ekedalsskolan", "Preschool", or "Other"
-for the source based on the newsletter context. Do not duplicate events.`,
+only events with a clear date. Today's current date is ${today}. Use this to
+accurately determine the year for any dates mentioned. The newsletter will likely
+be in Swedish, but your output must exactly follow the requested JSON schema. Use
+YYYY-MM-DD dates and 24-hour HH:MM times. Set is_all_day to true when no specific
+start or end time is given. Use "Ekedalsskolan", "Preschool", or "Other" for the
+source based on the newsletter context. Do not duplicate events.`,
     prompt: rawText,
   });
 
