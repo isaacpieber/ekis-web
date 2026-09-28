@@ -27,7 +27,7 @@ const schoolEventSchema = z.object({
     )
     .optional(),
   is_all_day: z.boolean(),
-  source: z.enum(["Ekedalsskolan", "Preschool", "Other"]),
+  source: z.enum(["School", "Preschool", "Other"]),
 });
 
 export type SchoolEvent = z.infer<typeof schoolEventSchema>;
@@ -77,7 +77,7 @@ only events with a clear date. Today's current date is ${today}. Use this to
 accurately determine the year for any dates mentioned. The newsletter will likely
 be in Swedish, but your output must exactly follow the requested JSON schema. Use
 YYYY-MM-DD dates and 24-hour HH:MM times. Set is_all_day to true when no specific
-start or end time is given. Use "Ekedalsskolan", "Preschool", or "Other" for the
+start or end time is given. Use "School", "Preschool", or "Other" for the
 source based on the newsletter context. Do not duplicate events.`,
     prompt: rawText,
   });
