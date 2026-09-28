@@ -67,7 +67,7 @@ export async function extractEvents(rawText: string) {
 
   const today = new Date().toISOString().split("T")[0];
   const { object: events } = await generateObject({
-    model: google("gemini-1.5-flash"),
+    model: google("gemini-2.5-flash"),
     output: "array",
     schema: schoolEventSchema,
     system: `You are a scheduling assistant for a family calendar.
