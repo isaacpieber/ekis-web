@@ -52,6 +52,43 @@ export function getGoogleCalendarUrl(event: SchoolEvent) {
   return url.toString();
 }
 
+function escapeIcsText(value: string) {
+  return value
+    .replaceAll("\\", "\\\\")
+    .replace(/\r?\n/g, "\\n")
+    .replaceAll(";", "\\;")
+    .replaceAll(",", "\\,");
+}
+
+export function generateIcsUri(event: SchoolEvent) {
+  const description = [event.description, event.source]
+    .filter((value): value is string => Boolean(value))
+    .join("\n\n");
+  const calendarLines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "BEGIN:VEVENT",
+    `SUMMARY:${escapeIcsText(event.title)}`,
+    `DESCRIPTION:${escapeIcsText(description)}`,
+  ];
+
+  if (!event.is_all_day && event.start_time && event.end_time) {
+    calendarLines.push(
+      `DTSTART:${formatCalendarTime(event.event_date, event.start_time)}`,
+      `DTEND:${formatCalendarTime(event.event_date, event.end_time)}`,
+    );
+  } else {
+    calendarLines.push(
+      `DTSTART;VALUE=DATE:${formatCalendarDate(event.event_date)}`,
+      `DTEND;VALUE=DATE:${formatCalendarDate(getNextDay(event.event_date))}`,
+    );
+  }
+
+  calendarLines.push("END:VEVENT", "END:VCALENDAR");
+
+  return `data:text/calendar;charset=utf8,${encodeURIComponent(calendarLines.join("\r\n"))}`;
+}
+
 function formatDisplayDate(date: string) {
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "long",
@@ -108,6 +145,9 @@ export default async function UpcomingEvents() {
                     role="button"
                   >
                     Add to Google Calendar
+                  </a>
+                  <a href={generateIcsUri(event)} download="event.ics">
+                    Add to Apple Calendar
                   </a>
                 </article>
               </li>
