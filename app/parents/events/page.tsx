@@ -1,6 +1,6 @@
 "use client";
 
-import { getISOWeek, getISOYear } from "date-fns";
+import { getISOWeek, getISOWeekYear } from "date-fns";
 import { useState, type FormEvent } from "react";
 
 import { extractEvents } from "@/app/actions/extractEvents";
@@ -8,7 +8,7 @@ import { extractEvents } from "@/app/actions/extractEvents";
 function getCurrentIsoWeek() {
   const today = new Date();
 
-  return `${getISOYear(today)}-W${String(getISOWeek(today)).padStart(2, "0")}`;
+  return `${getISOWeekYear(today)}-W${String(getISOWeek(today)).padStart(2, "0")}`;
 }
 
 export default function ParentEventsPage() {
