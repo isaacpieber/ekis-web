@@ -1,4 +1,9 @@
+import { addDays, format, parseISO } from "date-fns";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
+
 import { createClient } from "@/utils/supabase/server";
+
+const stockholmTimeZone = "Europe/Stockholm";
 
 type SchoolEvent = {
   title: string;
@@ -11,19 +16,24 @@ type SchoolEvent = {
 };
 
 function formatCalendarDate(date: string) {
-  return date.replaceAll("-", "");
+  return format(parseISO(date), "yyyyMMdd");
 }
 
 function getNextDay(date: string) {
-  const nextDay = new Date(`${date}T00:00:00Z`);
-  nextDay.setUTCDate(nextDay.getUTCDate() + 1);
-
-  return nextDay.toISOString().split("T")[0];
+  return addDays(parseISO(date), 1);
 }
 
 function formatCalendarTime(date: string, time: string) {
-  const [hours, minutes] = time.split(":");
-  return `${formatCalendarDate(date)}T${hours}${minutes}00`;
+  const localDateTime = fromZonedTime(
+    `${date}T${time}`,
+    stockholmTimeZone,
+  );
+
+  return formatInTimeZone(
+    localDateTime,
+    stockholmTimeZone,
+    "yyyyMMdd'T'HHmmss",
+  );
 }
 
 function escapeIcsText(value: string) {
@@ -54,7 +64,7 @@ function generateIcs(event: SchoolEvent) {
   } else {
     calendarLines.push(
       `DTSTART;VALUE=DATE:${formatCalendarDate(event.event_date)}`,
-      `DTEND;VALUE=DATE:${formatCalendarDate(getNextDay(event.event_date))}`,
+      `DTEND;VALUE=DATE:${format(getNextDay(event.event_date), "yyyyMMdd")}`,
     );
   }
 

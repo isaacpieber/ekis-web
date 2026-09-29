@@ -1,4 +1,10 @@
+import { addDays, format, parseISO } from "date-fns";
+import { sv } from "date-fns/locale/sv";
+import { formatInTimeZone } from "date-fns-tz";
+
 import { createClient } from "@/utils/supabase/server";
+
+const stockholmTimeZone = "Europe/Stockholm";
 
 type SchoolEvent = {
   id: string;
@@ -12,19 +18,15 @@ type SchoolEvent = {
 };
 
 function formatCalendarDate(date: string) {
-  return date.replaceAll("-", "");
+  return format(parseISO(date), "yyyyMMdd");
 }
 
 function getNextDay(date: string) {
-  const nextDay = new Date(`${date}T00:00:00Z`);
-  nextDay.setUTCDate(nextDay.getUTCDate() + 1);
-
-  return nextDay.toISOString().split("T")[0];
+  return addDays(parseISO(date), 1);
 }
 
 function formatCalendarTime(date: string, time: string) {
-  const [hours, minutes] = time.split(":");
-  return `${formatCalendarDate(date)}T${hours}${minutes}00`;
+  return format(parseISO(`${date}T${time}`), "yyyyMMdd'T'HHmmss");
 }
 
 export function getGoogleCalendarUrl(event: SchoolEvent) {
@@ -46,7 +48,7 @@ export function getGoogleCalendarUrl(event: SchoolEvent) {
   } else {
     url.searchParams.set(
       "dates",
-      `${formatCalendarDate(event.event_date)}/${formatCalendarDate(getNextDay(event.event_date))}`,
+      `${formatCalendarDate(event.event_date)}/${format(getNextDay(event.event_date), "yyyyMMdd")}`,
     );
   }
 
@@ -54,10 +56,7 @@ export function getGoogleCalendarUrl(event: SchoolEvent) {
 }
 
 function formatDisplayDate(date: string) {
-  return new Intl.DateTimeFormat("sv-SE", {
-    dateStyle: "long",
-    timeZone: "UTC",
-  }).format(new Date(`${date}T00:00:00Z`));
+  return format(parseISO(date), "d MMMM yyyy", { locale: sv });
 }
 
 function formatDisplayTime(event: SchoolEvent) {
@@ -65,12 +64,18 @@ function formatDisplayTime(event: SchoolEvent) {
     return null;
   }
 
-  return `${event.start_time.slice(0, 5)}–${event.end_time.slice(0, 5)}`;
+  const startTime = format(
+    parseISO(`1970-01-01T${event.start_time}`),
+    "HH:mm",
+  );
+  const endTime = format(parseISO(`1970-01-01T${event.end_time}`), "HH:mm");
+
+  return `${startTime}–${endTime}`;
 }
 
 export default async function UpcomingEvents() {
   const supabase = await createClient();
-  const today = new Date().toISOString().split("T")[0];
+  const today = formatInTimeZone(new Date(), stockholmTimeZone, "yyyy-MM-dd");
   const { data: events, error } = await supabase
     .from("school_events")
     .select(

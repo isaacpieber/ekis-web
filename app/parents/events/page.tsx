@@ -1,24 +1,14 @@
 "use client";
 
+import { getISOWeek, getISOYear } from "date-fns";
 import { useState, type FormEvent } from "react";
 
 import { extractEvents } from "@/app/actions/extractEvents";
 
 function getCurrentIsoWeek() {
-  const now = new Date();
-  const date = new Date(
-    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()),
-  );
-  const day = date.getUTCDay() || 7;
+  const today = new Date();
 
-  date.setUTCDate(date.getUTCDate() + 4 - day);
-
-  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-  const week = Math.ceil(
-    ((date.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7,
-  );
-
-  return `${date.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
+  return `${getISOYear(today)}-W${String(getISOWeek(today)).padStart(2, "0")}`;
 }
 
 export default function ParentEventsPage() {
