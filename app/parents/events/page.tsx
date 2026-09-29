@@ -4,8 +4,27 @@ import { useState, type FormEvent } from "react";
 
 import { extractEvents } from "@/app/actions/extractEvents";
 
+function getCurrentIsoWeek() {
+  const now = new Date();
+  const date = new Date(
+    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()),
+  );
+  const day = date.getUTCDay() || 7;
+
+  date.setUTCDate(date.getUTCDate() + 4 - day);
+
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(
+    ((date.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7,
+  );
+
+  return `${date.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
+}
+
 export default function ParentEventsPage() {
   const [rawText, setRawText] = useState("");
+  const [source, setSource] = useState("School");
+  const [week, setWeek] = useState(getCurrentIsoWeek);
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -17,7 +36,7 @@ export default function ParentEventsPage() {
     setErrorMessage(null);
 
     try {
-      const { events } = await extractEvents(rawText);
+      const { events } = await extractEvents(rawText, week, source);
       const eventCount = events.length;
 
       setRawText("");
@@ -39,6 +58,34 @@ export default function ParentEventsPage() {
     <main>
       <h1>Extract school events</h1>
       <form onSubmit={handleSubmit}>
+        <fieldset disabled={isLoading}>
+          <legend>Newsletter details</legend>
+          <label htmlFor="newsletter-source">Source</label>
+          <select
+            id="newsletter-source"
+            name="source"
+            value={source}
+            onChange={(event) => setSource(event.target.value)}
+          >
+            <option value="School">School</option>
+            <option value="Preschool">Preschool</option>
+          </select>
+
+          <label htmlFor="newsletter-week">Newsletter Week</label>
+          <input
+            id="newsletter-week"
+            name="week"
+            type="week"
+            value={week}
+            onChange={(event) => setWeek(event.target.value)}
+            required
+          />
+
+          <button type="submit">
+            {isLoading ? "Extracting..." : "Extract Dates"}
+          </button>
+        </fieldset>
+
         <label htmlFor="newsletter-text">Newsletter text</label>
         <textarea
           id="newsletter-text"
@@ -49,9 +96,6 @@ export default function ParentEventsPage() {
           required
           disabled={isLoading}
         />
-        <button type="submit" disabled={isLoading}>
-          {isLoading ? "Extracting..." : "Extract Dates"}
-        </button>
       </form>
 
       {successMessage && <p role="status">{successMessage}</p>}

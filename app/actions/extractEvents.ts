@@ -32,7 +32,11 @@ const schoolEventSchema = z.object({
 
 export type SchoolEvent = z.infer<typeof schoolEventSchema>;
 
-export async function extractEvents(rawText: string) {
+export async function extractEvents(
+  rawText: string,
+  weekContext: string,
+  selectedSource: string,
+) {
   if (!rawText.trim()) {
     throw new Error("Newsletter text is required.");
   }
@@ -75,10 +79,12 @@ export async function extractEvents(rawText: string) {
 Extract every distinct upcoming event from the supplied school newsletter. Include
 only events with a clear date. Today's current date is ${today}. Use this to
 accurately determine the year for any dates mentioned. The newsletter will likely
-be in Swedish, but your output must exactly follow the requested JSON schema. Use
+be in Swedish, but your output must exactly follow the requested JSON schema.
+This newsletter was published during ${weekContext}. Use this specific week as the
+current baseline to accurately resolve any relative dates (e.g., "this Friday" or
+"next week"). Set the source to ${selectedSource} for all extracted events. Use
 YYYY-MM-DD dates and 24-hour HH:MM times. Set is_all_day to true when no specific
-start or end time is given. Use "School", "Preschool", or "Other" for the
-source based on the newsletter context. Do not duplicate events.`,
+start or end time is given. Do not duplicate events.`,
     prompt: rawText,
   });
 
