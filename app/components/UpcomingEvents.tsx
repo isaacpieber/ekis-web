@@ -111,7 +111,6 @@ export default async function UpcomingEvents() {
                     href={getGoogleCalendarUrl(event)}
                     target="_blank"
                     rel="noreferrer"
-                    role="button"
                   >
                     Add to Google Calendar
                   </a>

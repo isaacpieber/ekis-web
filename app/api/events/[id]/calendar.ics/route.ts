@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/server";
 const stockholmTimeZone = "Europe/Stockholm";
 
 type SchoolEvent = {
+  id: string;
   title: string;
   description: string | null;
   event_date: string;
@@ -45,13 +46,17 @@ function escapeIcsText(value: string) {
 }
 
 function generateIcs(event: SchoolEvent) {
+  const timestamp = formatInTimeZone(new Date(), "UTC", "yyyyMMdd'T'HHmmss'Z'");
   const description = [event.description, event.source]
     .filter((value): value is string => Boolean(value))
     .join("\n\n");
   const calendarLines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
+    "PRODID:-//Ekis//School Events//EN",
     "BEGIN:VEVENT",
+    `UID:${event.id}@ekis`,
+    `DTSTAMP:${timestamp}`,
     `SUMMARY:${escapeIcsText(event.title)}`,
     `DESCRIPTION:${escapeIcsText(description)}`,
   ];
@@ -82,7 +87,7 @@ export async function GET(
   const { data: event, error } = await supabase
     .from("school_events")
     .select(
-      "title, description, event_date, start_time, end_time, is_all_day, source",
+      "id, title, description, event_date, start_time, end_time, is_all_day, source",
     )
     .eq("id", id)
     .single();

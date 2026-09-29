@@ -2,9 +2,13 @@
 
 import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
+import { formatInTimeZone } from "date-fns-tz";
 import { z } from "zod";
 
 import { createClient } from "@/utils/supabase/server";
+
+const MAX_NEWSLETTER_LENGTH = 50_000;
+const stockholmTimeZone = "Europe/Stockholm";
 
 const schoolEventSchema = z.object({
   title: z.string(),
@@ -37,8 +41,16 @@ export async function extractEvents(
   weekContext: string,
   selectedSource: string,
 ) {
-  if (!rawText.trim()) {
+  const newsletterText = rawText.trim();
+
+  if (!newsletterText) {
     throw new Error("Newsletter text is required.");
+  }
+
+  if (newsletterText.length > MAX_NEWSLETTER_LENGTH) {
+    throw new Error(
+      `Newsletter text must not exceed ${MAX_NEWSLETTER_LENGTH.toLocaleString()} characters.`,
+    );
   }
 
   const supabase = await createClient();
@@ -69,7 +81,7 @@ export async function extractEvents(
     throw new Error("Only parents can extract and create school events.");
   }
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = formatInTimeZone(new Date(), stockholmTimeZone, "yyyy-MM-dd");
   const { object: events } = await generateObject({
     model: google("gemini-3.8-flash"),
     output: "array",
@@ -85,7 +97,7 @@ current baseline to accurately resolve any relative dates (e.g., "this Friday" o
 "next week"). Set the source to ${selectedSource} for all extracted events. Use
 YYYY-MM-DD dates and 24-hour HH:MM times. Set is_all_day to true when no specific
 start or end time is given. Do not duplicate events.`,
-    prompt: rawText,
+    prompt: newsletterText,
   });
 
   if (events.length === 0) {
