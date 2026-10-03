@@ -5,6 +5,11 @@ import { formatInTimeZone } from "date-fns-tz";
 import { createClient } from "@/utils/supabase/server";
 
 const stockholmTimeZone = "Europe/Stockholm";
+const sourceLabels: Record<string, string> = {
+  School: "Skola",
+  Preschool: "Förskola",
+  Other: "Övrigt",
+};
 
 type SchoolEvent = {
   id: string;
@@ -117,7 +122,9 @@ export default async function UpcomingEvents() {
                   <p className="text-sm text-text-muted mb-4">
                     {formatDisplayDate(event.event_date)}
                     {time && <> · {time}</>}
-                    {event.source && <> · {event.source}</>}
+                    {event.source && (
+                      <> · {sourceLabels[event.source] ?? event.source}</>
+                    )}
                   </p>
                   <a
                     href={`/api/events/${event.id}/calendar.ics`}
