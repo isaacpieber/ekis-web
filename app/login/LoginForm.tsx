@@ -37,13 +37,13 @@ export function LoginForm() {
   return (
     <main className="min-h-screen bg-background flex items-center justify-center p-4">
       <section className="w-full max-w-md bg-surface rounded-xl p-6 shadow-sm border border-surface-dark">
-        <h1 className="text-text-main font-bold text-2xl mb-6">Log in</h1>
+        <h1 className="text-text-main font-bold text-2xl mb-6">Logga in</h1>
         <form onSubmit={handleSubmit}>
           <label
             htmlFor="username"
             className="block text-text-main font-medium mb-1"
           >
-            Username
+            Användarnamn
           </label>
           <input
             id="username"
@@ -56,7 +56,7 @@ export function LoginForm() {
             htmlFor="password"
             className="block text-text-main font-medium mb-1"
           >
-            Password
+            Lösenord
           </label>
           <input
             id="password"
@@ -71,7 +71,7 @@ export function LoginForm() {
             type="submit"
             className="w-full min-h-[44px] rounded-xl bg-primary text-white hover:bg-primary-hover font-medium mt-4"
           >
-            {isSubmitting ? "Logging in..." : "Log in"}
+            {isSubmitting ? "Loggar in..." : "Logga in"}
           </button>
 
           {error && (
