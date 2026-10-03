@@ -116,7 +116,8 @@ export default async function UpcomingEvents() {
                   </a>
                   <a
                     href={`/api/events/${event.id}/calendar.ics`}
-                    download="event.ics"
+                    target="_blank"
+                    rel="noreferrer"
                   >
                     Add to Apple Calendar
                   </a>

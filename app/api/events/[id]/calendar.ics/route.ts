@@ -99,7 +99,7 @@ export async function GET(
   return new Response(generateIcs(event as SchoolEvent), {
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
-      "Content-Disposition": 'attachment; filename="event.ics"',
+      "Content-Disposition": 'inline; filename="event.ics"',
     },
   });
 }
