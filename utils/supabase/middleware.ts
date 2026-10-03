@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_PATHS = ["/protected"];
+const PUBLIC_PATHS = ["/login", "/auth/callback"];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -33,16 +33,25 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isProtectedRoute = PROTECTED_PATHS.some(
-    (path) =>
-      request.nextUrl.pathname === path ||
-      request.nextUrl.pathname.startsWith(`${path}/`),
-  );
+  const pathname = request.nextUrl.pathname.replace(/\/$/, "") || "/";
+  const isPublicPath = PUBLIC_PATHS.includes(pathname);
 
-  if (isProtectedRoute && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+  if (user && pathname === "/login") {
+    const redirectResponse = NextResponse.redirect(new URL("/", request.url));
+    supabaseResponse.cookies
+      .getAll()
+      .forEach((cookie) => redirectResponse.cookies.set(cookie));
+    return redirectResponse;
+  }
+
+  if (!user && !isPublicPath) {
+    const redirectResponse = NextResponse.redirect(
+      new URL("/login", request.url),
+    );
+    supabaseResponse.cookies
+      .getAll()
+      .forEach((cookie) => redirectResponse.cookies.set(cookie));
+    return redirectResponse;
   }
 
   return supabaseResponse;
