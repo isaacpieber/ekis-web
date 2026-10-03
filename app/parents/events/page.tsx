@@ -31,13 +31,13 @@ export default function ParentEventsPage() {
 
       setRawText("");
       setSuccessMessage(
-        `${eventCount} ${eventCount === 1 ? "event" : "events"} saved to the database.`,
+        `${eventCount} ${eventCount === 1 ? "händelse har" : "händelser har"} sparats i databasen.`,
       );
     } catch (error) {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : "Unable to extract dates from the newsletter.",
+          : "Det gick inte att extrahera datum från nyhetsbrevet.",
       );
     } finally {
       setIsLoading(false);
@@ -48,7 +48,7 @@ export default function ParentEventsPage() {
     <main className="max-w-2xl mx-auto p-4">
       <section className="bg-surface rounded-xl p-6 shadow-sm border border-surface-dark">
         <h1 className="text-text-main font-bold text-2xl mb-6">
-          Extract school events
+          Extrahera skolevenemang
         </h1>
         <form onSubmit={handleSubmit}>
           <fieldset
@@ -56,13 +56,13 @@ export default function ParentEventsPage() {
             className="border-0 p-0 m-0"
           >
             <legend className="text-text-muted font-medium mb-3">
-              Newsletter details
+              Nyhetsbrevets uppgifter
             </legend>
             <label
               htmlFor="newsletter-source"
               className="block text-text-main font-medium mb-1"
             >
-              Source
+              Källa
             </label>
             <select
               id="newsletter-source"
@@ -71,15 +71,15 @@ export default function ParentEventsPage() {
               onChange={(event) => setSource(event.target.value)}
               className="min-h-[44px] rounded-xl border border-surface-dark bg-background px-4 text-text-main focus:ring-2 focus:ring-primary focus:outline-none w-full mb-4"
             >
-              <option value="School">School</option>
-              <option value="Preschool">Preschool</option>
+              <option value="School">Skola</option>
+              <option value="Preschool">Förskola</option>
             </select>
 
             <label
               htmlFor="newsletter-week"
               className="block text-text-main font-medium mb-1"
             >
-              Newsletter Week
+              Nyhetsbrevets vecka
             </label>
             <input
               id="newsletter-week"
@@ -95,7 +95,7 @@ export default function ParentEventsPage() {
               htmlFor="newsletter-text"
               className="block text-text-main font-medium mb-1"
             >
-              Newsletter text
+              Nyhetsbrevstext
             </label>
             <textarea
               id="newsletter-text"
@@ -111,7 +111,7 @@ export default function ParentEventsPage() {
               type="submit"
               className="w-full min-h-[44px] rounded-xl bg-primary text-white hover:bg-primary-hover font-medium mt-4"
             >
-              {isLoading ? "Extracting..." : "Extract Dates"}
+              {isLoading ? "Extraherar..." : "Extrahera datum"}
             </button>
           </fieldset>
         </form>

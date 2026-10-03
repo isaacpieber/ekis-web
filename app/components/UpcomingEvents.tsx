@@ -85,7 +85,7 @@ export default async function UpcomingEvents() {
     .order("event_date", { ascending: true });
 
   if (error) {
-    throw new Error(`Unable to load upcoming events: ${error.message}`);
+    throw new Error(`Det gick inte att läsa in kommande händelser: ${error.message}`);
   }
 
   const upcomingEvents = (events ?? []) as SchoolEvent[];
@@ -99,10 +99,10 @@ export default async function UpcomingEvents() {
         id="upcoming-events-heading"
         className="text-2xl font-bold text-text-main mb-4"
       >
-        Upcoming events
+        Kommande händelser
       </h2>
       {upcomingEvents.length === 0 ? (
-        <p className="text-text-muted">No upcoming school events.</p>
+        <p className="text-text-muted">Inga inplanerade händelser</p>
       ) : (
         <ul className="list-none p-0">
           {upcomingEvents.map((event) => {
@@ -123,7 +123,7 @@ export default async function UpcomingEvents() {
                     href={`/api/events/${event.id}/calendar.ics`}
                     className="flex items-center justify-center w-full min-h-[44px] rounded-xl font-medium bg-primary text-white hover:bg-primary-hover mb-3"
                   >
-                    Add to Apple Calendar
+                    Lägg till i Apple Kalender
                   </a>
                   <a
                     href={getGoogleCalendarUrl(event)}
@@ -131,7 +131,7 @@ export default async function UpcomingEvents() {
                     rel="noreferrer"
                     className="flex items-center justify-center w-full min-h-[44px] rounded-xl font-medium bg-surface-dark text-text-main hover:opacity-80"
                   >
-                    Add to Google Calendar
+                    Lägg till i Google Kalender
                   </a>
                 </article>
               </li>
