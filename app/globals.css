@@ -1,1 +1,27 @@
 @import "tailwindcss";
+
+@theme {
+  /* Brand Colors - Barbie Pink */
+  --color-primary: #e0218a;
+  --color-primary-hover: #be1875;
+
+  /* Surface Colors */
+  --color-background: #fdf2f8;
+  --color-surface: #ffffff;
+  --color-surface-dark: #fbcfe8;
+
+  /* Text Colors */
+  --color-text-main: #4a044e;
+  --color-text-muted: #9d174d;
+
+  /* Friendly Geometry */
+  --radius-xl: 1rem;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text-main);
+    -webkit-tap-highlight-color: transparent;
+  }
+}
