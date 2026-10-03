@@ -91,33 +91,47 @@ export default async function UpcomingEvents() {
   const upcomingEvents = (events ?? []) as SchoolEvent[];
 
   return (
-    <section aria-labelledby="upcoming-events-heading">
-      <h2 id="upcoming-events-heading">Upcoming events</h2>
+    <section
+      aria-labelledby="upcoming-events-heading"
+      className="max-w-md mx-auto p-4"
+    >
+      <h2
+        id="upcoming-events-heading"
+        className="text-2xl font-bold text-text-main mb-4"
+      >
+        Upcoming events
+      </h2>
       {upcomingEvents.length === 0 ? (
-        <p>No upcoming school events.</p>
+        <p className="text-text-muted">No upcoming school events.</p>
       ) : (
-        <ul>
+        <ul className="list-none p-0">
           {upcomingEvents.map((event) => {
             const time = formatDisplayTime(event);
 
             return (
               <li key={event.id}>
-                <article>
-                  <h3>{event.title}</h3>
-                  <p>{formatDisplayDate(event.event_date)}</p>
-                  {time && <p>{time}</p>}
-                  {event.source && <p>{event.source}</p>}
+                <article className="bg-surface rounded-xl p-5 shadow-sm border border-surface-dark mb-4">
+                  <h3 className="text-lg font-bold text-text-main mb-1">
+                    {event.title}
+                  </h3>
+                  <p className="text-sm text-text-muted mb-4">
+                    {formatDisplayDate(event.event_date)}
+                    {time && <> · {time}</>}
+                    {event.source && <> · {event.source}</>}
+                  </p>
+                  <a
+                    href={`/api/events/${event.id}/calendar.ics`}
+                    className="flex items-center justify-center w-full min-h-[44px] rounded-xl font-medium bg-primary text-white hover:bg-primary-hover mb-3"
+                  >
+                    Add to Apple Calendar
+                  </a>
                   <a
                     href={getGoogleCalendarUrl(event)}
                     target="_blank"
                     rel="noreferrer"
+                    className="flex items-center justify-center w-full min-h-[44px] rounded-xl font-medium bg-surface-dark text-text-main hover:opacity-80"
                   >
                     Add to Google Calendar
-                  </a>
-                  <a
-                    href={`/api/events/${event.id}/calendar.ics`}
-                  >
-                    Add to Apple Calendar
                   </a>
                 </article>
               </li>
