@@ -55,7 +55,7 @@ function getGoogleCalendarUrl(event: SchoolEvent) {
   } else {
     url.searchParams.set(
       "dates",
-      `${formatCalendarDate(event.event_date)}/${format(getNextDay(event.event_date), "yyyyMMdd")}`,
+      `${formatCalendarDate(event.event_date)}/${getNextDay(event.event_date)}`,
     );
   }
 
