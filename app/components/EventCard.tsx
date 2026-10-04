@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { addDays, format, parseISO } from "date-fns";
 import { sv } from "date-fns/locale/sv";
 
@@ -77,6 +77,7 @@ function formatDisplayTime(event: SchoolEvent) {
 export default function EventCard({ event }: { event: SchoolEvent }) {
   const [isAppleDevice, setIsAppleDevice] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const googleCalendarUrl = getGoogleCalendarUrl(event);
   const calendarUrl = `/api/events/${event.id}/calendar.ics`;
   const alternativeCalendarLabel = isAppleDevice
@@ -87,13 +88,27 @@ export default function EventCard({ event }: { event: SchoolEvent }) {
     setIsAppleDevice(/iPhone|iPad|iPod|Mac/i.test(navigator.userAgent));
   }, []);
 
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node)
+      ) {
+        setIsMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const time = formatDisplayTime(event);
 
   return (
     <article className="relative mb-4 rounded-xl border border-surface-dark bg-surface p-5 shadow-sm">
       <div className="mb-1 flex items-start justify-between gap-3">
         <h3 className="text-lg font-bold text-text-main">{event.title}</h3>
-        <div className="relative shrink-0">
+        <div ref={menuRef} className="relative shrink-0">
           <button
             type="button"
             aria-label={`Alternativ för ${event.title}`}
