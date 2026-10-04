@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { addDays, format, parseISO } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { sv } from "date-fns/locale/sv";
 
 const sourceLabels: Record<string, string> = {
@@ -22,15 +22,18 @@ export type SchoolEvent = {
 };
 
 function formatCalendarDate(date: string) {
-  return format(parseISO(date), "yyyyMMdd");
+  return date.replace(/-/g, "");
 }
 
 function getNextDay(date: string) {
-  return addDays(parseISO(date), 1);
+  const nextDay = new Date(`${date}T00:00:00.000Z`);
+  nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+  return nextDay.toISOString().slice(0, 10).replace(/-/g, "");
 }
 
 function formatCalendarTime(date: string, time: string) {
-  return format(parseISO(`${date}T${time}`), "yyyyMMdd'T'HHmmss");
+  const [hour, minute, seconds = "00"] = time.split(":");
+  return `${formatCalendarDate(date)}T${hour}${minute}${seconds.slice(0, 2)}`;
 }
 
 function getGoogleCalendarUrl(event: SchoolEvent) {
@@ -80,6 +83,9 @@ export default function EventCard({ event }: { event: SchoolEvent }) {
   const menuRef = useRef<HTMLDivElement>(null);
   const googleCalendarUrl = getGoogleCalendarUrl(event);
   const calendarUrl = `/api/events/${event.id}/calendar.ics`;
+  const primaryCalendarLabel = isAppleDevice
+    ? "Lägg till i Apple Kalender"
+    : "Lägg till i Google Kalender";
   const alternativeCalendarLabel = isAppleDevice
     ? "Lägg till i Google Kalender"
     : "Lägg till i Apple Kalender";
@@ -180,7 +186,7 @@ export default function EventCard({ event }: { event: SchoolEvent }) {
           href={isAppleDevice ? calendarUrl : googleCalendarUrl}
           target={isAppleDevice ? undefined : "_blank"}
           rel={isAppleDevice ? undefined : "noreferrer"}
-          aria-label={alternativeCalendarLabel}
+          aria-label={primaryCalendarLabel}
           className="flex h-12 w-12 min-h-11 min-w-11 items-center justify-center rounded-xl bg-primary text-surface hover:bg-primary-hover focus:ring-2 focus:ring-primary focus:outline-none"
         >
           <svg
