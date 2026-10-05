@@ -24,7 +24,6 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
     updateEvent.bind(null, event.id),
     { error: null },
   );
-  const hasSelectedTime = Boolean(fields.start_time || fields.end_time);
 
   return (
     <form
@@ -105,6 +104,7 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
             name="start_time"
             type="time"
             value={fields.start_time}
+            disabled={fields.is_all_day}
             onChange={(inputEvent) =>
               setFields((current) => ({
                 ...current,
@@ -112,7 +112,7 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
                 ...(inputEvent.target.value ? { is_all_day: false } : {}),
               }))
             }
-            className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
+            className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-text-main focus:ring-2 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
 
@@ -125,6 +125,7 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
             name="end_time"
             type="time"
             value={fields.end_time}
+            disabled={fields.is_all_day}
             onChange={(inputEvent) =>
               setFields((current) => ({
                 ...current,
@@ -132,7 +133,7 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
                 ...(inputEvent.target.value ? { is_all_day: false } : {}),
               }))
             }
-            className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
+            className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-text-main focus:ring-2 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
       </div>
@@ -142,17 +143,28 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
           name="is_all_day"
           type="checkbox"
           checked={fields.is_all_day}
-          disabled={hasSelectedTime}
           onChange={(inputEvent) =>
-            setFields((current) => ({
-              ...current,
-              is_all_day: inputEvent.target.checked,
-            }))
+            setFields((current) =>
+              inputEvent.target.checked
+                ? {
+                    ...current,
+                    is_all_day: true,
+                    start_time: "",
+                    end_time: "",
+                  }
+                : { ...current, is_all_day: false },
+            )
           }
           className="min-h-[44px] min-w-[44px] accent-primary focus:ring-2 focus:ring-primary focus:outline-none"
         />
         Heldag
       </label>
+      {fields.is_all_day && (
+        <>
+          <input type="hidden" name="start_time" value={fields.start_time} />
+          <input type="hidden" name="end_time" value={fields.end_time} />
+        </>
+      )}
 
       <div className="flex flex-col gap-1">
         <label htmlFor="source" className="font-medium text-text-main">
