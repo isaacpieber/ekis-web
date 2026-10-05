@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { format, parseISO } from "date-fns";
 import { sv } from "date-fns/locale/sv";
+
+import { deleteEvent } from "@/app/actions/deleteEvent";
 
 const sourceLabels: Record<string, string> = {
   School: "Skola",
@@ -80,6 +82,8 @@ function formatDisplayTime(event: SchoolEvent) {
 export default function EventCard({ event }: { event: SchoolEvent }) {
   const [isAppleDevice, setIsAppleDevice] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const googleCalendarUrl = getGoogleCalendarUrl(event);
   const calendarUrl = `/api/events/${event.id}/calendar.ics`;
@@ -108,10 +112,46 @@ export default function EventCard({ event }: { event: SchoolEvent }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  function handleDelete() {
+    setIsMenuOpen(false);
+    setDeleteError(null);
+
+    if (
+      !window.confirm(
+        "Är du säker på att du vill ta bort den här händelsen?",
+      )
+    ) {
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const result = await deleteEvent(event.id);
+        if ("error" in result) {
+          setDeleteError(result.error);
+        }
+      } catch {
+        setDeleteError(
+          "Det gick inte att ta bort händelsen. Försök igen.",
+        );
+      }
+    });
+  }
+
   const time = formatDisplayTime(event);
 
   return (
     <article className="relative mb-4 rounded-xl border border-surface-dark bg-surface p-5 shadow-sm">
+      {isPending && (
+        <p role="status" className="mb-2 text-sm text-text-muted">
+          Tar bort...
+        </p>
+      )}
+      {deleteError && (
+        <p role="alert" className="mb-2 text-sm text-text-muted">
+          {deleteError}
+        </p>
+      )}
       <div className="mb-1 flex items-start justify-between gap-3">
         <h3 className="text-lg font-bold text-text-main">{event.title}</h3>
         <div ref={menuRef} className="relative shrink-0">
@@ -166,9 +206,11 @@ export default function EventCard({ event }: { event: SchoolEvent }) {
               </button>
               <button
                 type="button"
+                onClick={handleDelete}
+                disabled={isPending}
                 className="flex min-h-11 w-full items-center rounded-xl px-3 text-left text-sm text-text-main hover:bg-surface-dark focus:ring-2 focus:ring-primary focus:outline-none"
               >
-                Ta bort
+                {isPending ? "Tar bort..." : "Ta bort"}
               </button>
             </div>
           )}
