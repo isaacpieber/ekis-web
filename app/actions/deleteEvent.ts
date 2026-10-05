@@ -4,13 +4,15 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/utils/supabase/server";
 
-export async function deleteEvent(id: string) {
+type DeleteEventResult = { success: true } | { error: string };
+
+export async function deleteEvent(id: string): Promise<DeleteEventResult> {
   if (
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
       id,
     )
   ) {
-    throw new Error("Ogiltigt händelse-ID.");
+    return { error: "Ogiltigt händelse-ID." };
   }
 
   const supabase = await createClient();
@@ -20,11 +22,11 @@ export async function deleteEvent(id: string) {
   } = await supabase.auth.getUser();
 
   if (userError) {
-    throw new Error(`Kunde inte verifiera användaren: ${userError.message}`);
+    return { error: `Kunde inte verifiera användaren: ${userError.message}` };
   }
 
   if (!user) {
-    throw new Error("Du måste vara inloggad för att ta bort händelser.");
+    return { error: "Du måste vara inloggad för att ta bort händelser." };
   }
 
   const { data: profile, error: profileError } = await supabase
@@ -34,11 +36,13 @@ export async function deleteEvent(id: string) {
     .single();
 
   if (profileError) {
-    throw new Error(`Kunde inte verifiera användarrollen: ${profileError.message}`);
+    return {
+      error: `Kunde inte verifiera användarrollen: ${profileError.message}`,
+    };
   }
 
   if (profile.role !== "parent") {
-    throw new Error("Endast föräldrar får ta bort händelser.");
+    return { error: "Endast föräldrar får ta bort händelser." };
   }
 
   const { data: deletedEvent, error: deleteError } = await supabase
@@ -49,12 +53,13 @@ export async function deleteEvent(id: string) {
     .maybeSingle();
 
   if (deleteError) {
-    throw new Error(`Kunde inte ta bort händelsen: ${deleteError.message}`);
+    return { error: `Kunde inte ta bort händelsen: ${deleteError.message}` };
   }
 
   if (!deletedEvent) {
-    throw new Error("Händelsen hittades inte eller kunde inte tas bort.");
+    return { error: "Händelsen hittades inte eller kunde inte tas bort." };
   }
 
-  revalidatePath("/", "layout");
+  revalidatePath("/");
+  return { success: true };
 }

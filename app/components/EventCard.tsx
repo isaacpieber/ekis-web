@@ -126,12 +126,13 @@ export default function EventCard({ event }: { event: SchoolEvent }) {
 
     startTransition(async () => {
       try {
-        await deleteEvent(event.id);
-      } catch (error) {
+        const result = await deleteEvent(event.id);
+        if ("error" in result) {
+          setDeleteError(result.error);
+        }
+      } catch {
         setDeleteError(
-          error instanceof Error
-            ? error.message
-            : "Det gick inte att ta bort händelsen.",
+          "Det gick inte att ta bort händelsen. Försök igen.",
         );
       }
     });
