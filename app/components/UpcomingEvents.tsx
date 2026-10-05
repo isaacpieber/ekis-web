@@ -9,6 +9,34 @@ const stockholmTimeZone = "Europe/Stockholm";
 
 export default async function UpcomingEvents() {
   const supabase = await createClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError) {
+    throw new Error(
+      `Det gick inte att verifiera användaren: ${userError.message}`,
+    );
+  }
+
+  let canEdit = false;
+  if (user) {
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      throw new Error(
+        `Det gick inte att verifiera användarrollen: ${profileError.message}`,
+      );
+    }
+
+    canEdit = profile?.role === "parent";
+  }
+
   const { data: events, error } = await supabase
     .from("school_events")
     .select(
@@ -39,7 +67,7 @@ export default async function UpcomingEvents() {
       <ul className="list-none p-0">
         {eventList.map((event) => (
           <li key={event.id}>
-            <EventCard event={event} />
+            <EventCard event={event} canEdit={canEdit} />
           </li>
         ))}
       </ul>

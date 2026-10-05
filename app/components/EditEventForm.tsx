@@ -1,14 +1,41 @@
 "use client";
 
+import { useActionState, useState } from "react";
+
 import { updateEvent } from "@/app/actions/updateEvent";
 import type { SchoolEvent } from "@/app/components/EventCard";
 
 export default function EditEventForm({ event }: { event: SchoolEvent }) {
+  const [fields, setFields] = useState(() => {
+    const startTime = event.start_time?.slice(0, 5) ?? "";
+    const endTime = event.end_time?.slice(0, 5) ?? "";
+
+    return {
+      title: event.title,
+      description: event.description ?? "",
+      event_date: event.event_date,
+      start_time: startTime,
+      end_time: endTime,
+      is_all_day: Boolean(event.is_all_day) && !startTime && !endTime,
+      source: event.source ?? "",
+    };
+  });
+  const [state, formAction, isPending] = useActionState(
+    updateEvent.bind(null, event.id),
+    { error: null },
+  );
+  const hasSelectedTime = Boolean(fields.start_time || fields.end_time);
+
   return (
     <form
-      action={updateEvent.bind(null, event.id)}
+      action={formAction}
       className="flex flex-col gap-4"
     >
+      {state.error && (
+        <p role="alert" className="text-text-muted">
+          {state.error}
+        </p>
+      )}
       <div className="flex flex-col gap-1">
         <label htmlFor="title" className="font-medium text-text-main">
           Titel
@@ -18,7 +45,13 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
           name="title"
           type="text"
           required
-          defaultValue={event.title}
+          value={fields.title}
+          onChange={(inputEvent) =>
+            setFields((current) => ({
+              ...current,
+              title: inputEvent.target.value,
+            }))
+          }
           className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
         />
       </div>
@@ -31,7 +64,13 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
           id="description"
           name="description"
           rows={4}
-          defaultValue={event.description ?? ""}
+          value={fields.description}
+          onChange={(inputEvent) =>
+            setFields((current) => ({
+              ...current,
+              description: inputEvent.target.value,
+            }))
+          }
           className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
         />
       </div>
@@ -45,7 +84,13 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
           name="event_date"
           type="date"
           required
-          defaultValue={event.event_date}
+          value={fields.event_date}
+          onChange={(inputEvent) =>
+            setFields((current) => ({
+              ...current,
+              event_date: inputEvent.target.value,
+            }))
+          }
           className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
         />
       </div>
@@ -59,7 +104,14 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
             id="start_time"
             name="start_time"
             type="time"
-            defaultValue={event.start_time?.slice(0, 5) ?? ""}
+            value={fields.start_time}
+            onChange={(inputEvent) =>
+              setFields((current) => ({
+                ...current,
+                start_time: inputEvent.target.value,
+                ...(inputEvent.target.value ? { is_all_day: false } : {}),
+              }))
+            }
             className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
           />
         </div>
@@ -72,7 +124,14 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
             id="end_time"
             name="end_time"
             type="time"
-            defaultValue={event.end_time?.slice(0, 5) ?? ""}
+            value={fields.end_time}
+            onChange={(inputEvent) =>
+              setFields((current) => ({
+                ...current,
+                end_time: inputEvent.target.value,
+                ...(inputEvent.target.value ? { is_all_day: false } : {}),
+              }))
+            }
             className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
           />
         </div>
@@ -82,7 +141,14 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
         <input
           name="is_all_day"
           type="checkbox"
-          defaultChecked={event.is_all_day ?? false}
+          checked={fields.is_all_day}
+          disabled={hasSelectedTime}
+          onChange={(inputEvent) =>
+            setFields((current) => ({
+              ...current,
+              is_all_day: inputEvent.target.checked,
+            }))
+          }
           className="min-h-[44px] min-w-[44px] accent-primary focus:ring-2 focus:ring-primary focus:outline-none"
         />
         Heldag
@@ -95,7 +161,13 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
         <select
           id="source"
           name="source"
-          defaultValue={event.source ?? ""}
+          value={fields.source}
+          onChange={(inputEvent) =>
+            setFields((current) => ({
+              ...current,
+              source: inputEvent.target.value,
+            }))
+          }
           className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
         >
           <option value="">Ingen källa</option>
@@ -111,9 +183,10 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
 
       <button
         type="submit"
+        disabled={isPending}
         className="min-h-[44px] min-w-[44px] rounded-xl bg-primary px-4 font-medium text-surface hover:bg-primary-hover focus:ring-2 focus:ring-primary focus:outline-none"
       >
-        Spara ändringar
+        {isPending ? "Sparar..." : "Spara ändringar"}
       </button>
     </form>
   );
