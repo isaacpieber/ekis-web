@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { format, parseISO } from "date-fns";
 import { sv } from "date-fns/locale/sv";
+import Link from "next/link";
 
 import { deleteEvent } from "@/app/actions/deleteEvent";
 
@@ -79,7 +80,13 @@ function formatDisplayTime(event: SchoolEvent) {
   return `${startTime}–${endTime}`;
 }
 
-export default function EventCard({ event }: { event: SchoolEvent }) {
+export default function EventCard({
+  event,
+  canEdit,
+}: {
+  event: SchoolEvent;
+  canEdit: boolean;
+}) {
   const [isAppleDevice, setIsAppleDevice] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -198,12 +205,15 @@ export default function EventCard({ event }: { event: SchoolEvent }) {
                   {alternativeCalendarLabel}
                 </a>
               )}
-              <button
-                type="button"
-                className="flex min-h-11 w-full items-center rounded-xl px-3 text-left text-sm text-text-main hover:bg-surface-dark focus:ring-2 focus:ring-primary focus:outline-none"
-              >
-                Ändra
-              </button>
+              {canEdit && (
+                <Link
+                  href={`/parents/events/${event.id}`}
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex min-h-11 w-full items-center rounded-xl px-3 text-left text-sm text-text-main hover:bg-surface-dark focus:ring-2 focus:ring-primary focus:outline-none"
+                >
+                  Ändra
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={handleDelete}
