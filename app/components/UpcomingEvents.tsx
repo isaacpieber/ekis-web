@@ -88,11 +88,6 @@ export default async function UpcomingEvents() {
       >
         Kommande händelser
       </h2>
-      {calendarToken && (
-        <div className="mb-4">
-          <CalendarSubscribeButton token={calendarToken} />
-        </div>
-      )}
       {upcomingEvents.length === 0 ? (
         <p className="text-text-muted">Inga inplanerade händelser</p>
       ) : (
@@ -110,6 +105,11 @@ export default async function UpcomingEvents() {
             {renderEvents(pastEvents)}
           </div>
         </section>
+      )}
+      {calendarToken && (
+        <div className="mt-8 flex justify-center pb-32">
+          <CalendarSubscribeButton token={calendarToken} />
+        </div>
       )}
       <a
         href="/parents/events"
