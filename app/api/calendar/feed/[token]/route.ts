@@ -99,6 +99,12 @@ export async function GET(
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
+    console.error(
+      "Missing Env Vars - URL:",
+      !!supabaseUrl,
+      "ServiceKey:",
+      !!serviceRoleKey,
+    );
     return new NextResponse("Calendar feed unavailable", { status: 500 });
   }
 
@@ -110,6 +116,7 @@ export async function GET(
     .maybeSingle();
 
   if (profileError) {
+    console.error("Supabase Profile Error:", profileError);
     return new NextResponse("Calendar feed unavailable", { status: 500 });
   }
 
@@ -129,6 +136,7 @@ export async function GET(
       .range(offset, offset + pageSize - 1);
 
     if (eventsError || !page) {
+      console.error("Supabase Events Error:", eventsError);
       return new NextResponse("Calendar feed unavailable", { status: 500 });
     }
 
