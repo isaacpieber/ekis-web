@@ -2,6 +2,7 @@ import { addDays, format, parseISO } from "date-fns";
 import { sv } from "date-fns/locale/sv";
 import { formatInTimeZone } from "date-fns-tz";
 
+import CalendarSubscribeButton from "@/app/components/CalendarSubscribeButton";
 import EventCard, { type SchoolEvent } from "@/app/components/EventCard";
 import { createClient } from "@/utils/supabase/server";
 
@@ -21,10 +22,11 @@ export default async function UpcomingEvents() {
   }
 
   let canEdit = false;
+  let calendarToken: string | null = null;
   if (user) {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, calendar_token")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -35,6 +37,7 @@ export default async function UpcomingEvents() {
     }
 
     canEdit = profile?.role === "parent";
+    calendarToken = profile?.calendar_token ?? null;
   }
 
   const { data: events, error } = await supabase
@@ -85,6 +88,11 @@ export default async function UpcomingEvents() {
       >
         Kommande händelser
       </h2>
+      {calendarToken && (
+        <div className="mb-4">
+          <CalendarSubscribeButton token={calendarToken} />
+        </div>
+      )}
       {upcomingEvents.length === 0 ? (
         <p className="text-text-muted">Inga inplanerade händelser</p>
       ) : (

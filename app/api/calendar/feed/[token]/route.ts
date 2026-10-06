@@ -48,6 +48,8 @@ function generateIcs(events: SchoolEvent[]) {
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//Ekis//SV",
+    "X-WR-CALNAME:Ekis kalender",
+    "X-WR-CALDESC:Gemensam kalender för skol- och förskolehändelser",
   ];
 
   for (const event of events) {
