@@ -1,7 +1,15 @@
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "./utils/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  if (
+    pathname === "/api/calendar/feed" ||
+    pathname.startsWith("/api/calendar/feed/")
+  ) {
+    return NextResponse.next({ request });
+  }
+
   return updateSession(request);
 }
 
