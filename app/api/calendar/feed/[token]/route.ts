@@ -5,6 +5,9 @@ import { NextResponse } from "next/server";
 import type { Database } from "@/utils/supabase/database.types";
 
 const stockholmTimeZone = "Europe/Stockholm";
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const pageSize = 1000;
 
 type SchoolEvent = Pick<
   Database["public"]["Tables"]["school_events"]["Row"],
@@ -28,11 +31,7 @@ function formatCalendarTime(date: string, time: string) {
     stockholmTimeZone,
   );
 
-  return formatInTimeZone(
-    localDateTime,
-    stockholmTimeZone,
-    "yyyyMMdd'T'HHmmss",
-  );
+  return formatInTimeZone(localDateTime, "UTC", "yyyyMMdd'T'HHmmss'Z'");
 }
 
 function escapeIcsText(value: string) {
@@ -64,11 +63,15 @@ function generateIcs(events: SchoolEvent[]) {
       `DESCRIPTION:${escapeIcsText(description)}`,
     );
 
-    if (!event.is_all_day && event.start_time && event.end_time) {
+    if (!event.is_all_day && event.start_time) {
       calendarLines.push(
-        `DTSTART;TZID=${stockholmTimeZone}:${formatCalendarTime(event.event_date, event.start_time)}`,
-        `DTEND;TZID=${stockholmTimeZone}:${formatCalendarTime(event.event_date, event.end_time)}`,
+        `DTSTART:${formatCalendarTime(event.event_date, event.start_time)}`,
       );
+      if (event.end_time) {
+        calendarLines.push(
+          `DTEND:${formatCalendarTime(event.event_date, event.end_time)}`,
+        );
+      }
     } else {
       calendarLines.push(
         `DTSTART;VALUE=DATE:${formatCalendarDate(event.event_date)}`,
@@ -88,6 +91,10 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> },
 ) {
   const { token } = await params;
+  if (!uuidPattern.test(token)) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -110,15 +117,25 @@ export async function GET(
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
-  const { data: events, error: eventsError } = await supabase
-    .from("school_events")
-    .select(
-      "id, title, description, event_date, start_time, end_time, is_all_day, source",
-    )
-    .order("event_date", { ascending: true });
+  const events: SchoolEvent[] = [];
+  for (let offset = 0; ; offset += pageSize) {
+    const { data: page, error: eventsError } = await supabase
+      .from("school_events")
+      .select(
+        "id, title, description, event_date, start_time, end_time, is_all_day, source",
+      )
+      .order("event_date", { ascending: true })
+      .order("id", { ascending: true })
+      .range(offset, offset + pageSize - 1);
 
-  if (eventsError || !events) {
-    return new NextResponse("Calendar feed unavailable", { status: 500 });
+    if (eventsError || !page) {
+      return new NextResponse("Calendar feed unavailable", { status: 500 });
+    }
+
+    events.push(...page);
+    if (page.length < pageSize) {
+      break;
+    }
   }
 
   return new NextResponse(generateIcs(events), {
