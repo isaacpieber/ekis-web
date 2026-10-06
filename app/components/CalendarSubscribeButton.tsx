@@ -41,7 +41,7 @@ export default function CalendarSubscribeButton({
     <button
       type="button"
       onClick={handleSubscribe}
-      className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-surface-dark px-4 font-medium text-text-main hover:bg-surface focus:ring-2 focus:ring-primary focus:outline-none"
+      className="flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-xl text-sm font-medium text-text-muted transition-colors hover:text-text-main focus:outline-none focus:underline"
     >
       <svg
         aria-hidden="true"
