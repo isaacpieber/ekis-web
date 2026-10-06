@@ -23,4 +23,4 @@ You are building a mobile-first, installable Progressive Web App (PWA) with a st
 ## 3. Architecture & Security Context
 * **Framework:** Next.js (App Router), React, Tailwind CSS v4, Supabase (PostgreSQL with RLS).
 * **Security:** Row Level Security (RLS) is strictly enforced.
-* **Service Role Pattern:** The `.ics` calendar generation route (`app/api/events/[id]/calendar.ics/route.ts`) safely uses the Supabase Service Role key (`SUPABASE_SERVICE_ROLE_KEY`) to bypass RLS, relying on the mathematically unguessable UUID as the secure token for background iOS native fetches. Never leak the service role key to the client.
+* **Service Role Pattern:** The calendar subscription feed (`app/api/calendar/feed/[token]/route.ts`) uses the Supabase Service Role key (`SUPABASE_SERVICE_ROLE_KEY`) to bypass RLS only after validating the subscription token against a profile's `calendar_token`. Never leak the service role key to the client.
