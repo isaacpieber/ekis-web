@@ -1,78 +1,42 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import ProfileMenu from "./ProfileMenu";
-import { createClient } from "@/utils/supabase/client";
+import { createClient } from "@/utils/supabase/server";
 
-type Profile = {
-  first_name: string | null;
-  calendar_token: string | null;
-};
-
-export default function Header({
+export default async function Header({
   title,
   backLink,
 }: {
   title: string;
   backLink?: string;
 }) {
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [profileError, setProfileError] = useState<string | null>(null);
+  const supabase = await createClient();
+  let profile: {
+    first_name: string | null;
+    calendar_token: string | null;
+  } | null = null;
+  let errorMessage: string | null = null;
 
-  useEffect(() => {
-    let isMounted = true;
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-    async function loadProfile() {
-      const supabase = createClient();
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+  if (userError) {
+    errorMessage = `Kunde inte verifiera användaren: ${userError.message}`;
+  } else if (user) {
+    const { data, error: profileError } = await supabase
+      .from("profiles")
+      .select("first_name, calendar_token")
+      .eq("id", user.id)
+      .maybeSingle();
 
-      if (userError) {
-        throw new Error(`Kunde inte verifiera användaren: ${userError.message}`);
-      }
-
-      if (!user) {
-        if (isMounted) {
-          setProfile(null);
-        }
-        return;
-      }
-
-      const { data: profileData, error: profileFetchError } = await supabase
-        .from("profiles")
-        .select("first_name, calendar_token")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (profileFetchError) {
-        throw new Error(
-          `Kunde inte läsa in profilen: ${profileFetchError.message}`,
-        );
-      }
-
-      if (isMounted) {
-        setProfile(profileData);
-      }
+    if (profileError) {
+      errorMessage = `Kunde inte läsa in profilen: ${profileError.message}`;
+    } else {
+      profile = data;
     }
-
-    void loadProfile().catch((error: unknown) => {
-      if (isMounted) {
-        setProfileError(
-          error instanceof Error
-            ? error.message
-            : "Kunde inte läsa in profilen.",
-        );
-      }
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  }
 
   const initial = profile?.first_name
     ? profile.first_name.charAt(0).toUpperCase()
@@ -114,9 +78,9 @@ export default function Header({
           calendarToken={profile?.calendar_token}
         />
       </header>
-      {profileError && (
+      {errorMessage && (
         <p role="alert" className="mb-4 text-sm text-text-muted">
-          {profileError}
+          {errorMessage}
         </p>
       )}
     </>
