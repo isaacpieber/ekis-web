@@ -2,7 +2,6 @@ import { addDays, format, parseISO } from "date-fns";
 import { sv } from "date-fns/locale/sv";
 import { formatInTimeZone } from "date-fns-tz";
 
-import CalendarSubscribeButton from "@/app/components/CalendarSubscribeButton";
 import EventCard, { type SchoolEvent } from "@/app/components/EventCard";
 import ProfileMenu from "@/app/components/ProfileMenu";
 import { createClient } from "@/utils/supabase/server";
@@ -94,7 +93,7 @@ export default async function UpcomingEvents() {
         >
           Kommande händelser
         </h2>
-        <ProfileMenu initial={initial} />
+        <ProfileMenu initial={initial} calendarToken={calendarToken} />
       </div>
       {upcomingEvents.length === 0 ? (
         <p className="text-text-muted">Inga inplanerade händelser</p>
@@ -113,11 +112,6 @@ export default async function UpcomingEvents() {
             {renderEvents(pastEvents)}
           </div>
         </section>
-      )}
-      {calendarToken && (
-        <div className="mt-8 flex justify-center pb-32">
-          <CalendarSubscribeButton token={calendarToken} />
-        </div>
       )}
       <a
         href="/parents/events"

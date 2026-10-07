@@ -3,9 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import CalendarSubscribeButton from "@/app/components/CalendarSubscribeButton";
 import { createClient } from "@/utils/supabase/client";
 
-export default function ProfileMenu({ initial }: { initial: string }) {
+export default function ProfileMenu({
+  initial,
+  calendarToken,
+}: {
+  initial: string;
+  calendarToken?: string | null;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -53,6 +60,7 @@ export default function ProfileMenu({ initial }: { initial: string }) {
           id="profile-menu"
           className="absolute right-0 z-50 mt-2 w-48 rounded-xl border border-surface-dark bg-surface p-1 shadow-md"
         >
+          {calendarToken && <CalendarSubscribeButton token={calendarToken} />}
           {logoutError && (
             <p role="alert" className="px-4 py-2 text-sm text-text-muted">
               {logoutError}
