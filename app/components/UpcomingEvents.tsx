@@ -77,7 +77,7 @@ export default async function UpcomingEvents() {
   return (
     <section
       aria-labelledby="page-title"
-      className="w-full"
+      className="w-full pb-32"
     >
       {upcomingEvents.length === 0 ? (
         <p className="text-text-muted">Inga inplanerade händelser</p>

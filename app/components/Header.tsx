@@ -1,7 +1,13 @@
 import Link from "next/link";
 
 import ProfileMenu from "./ProfileMenu";
+import type { Database } from "@/utils/supabase/database.types";
 import { createClient } from "@/utils/supabase/server";
+
+type Profile = Pick<
+  Database["public"]["Tables"]["profiles"]["Row"],
+  "first_name" | "calendar_token"
+>;
 
 export default async function Header({
   title,
@@ -11,10 +17,7 @@ export default async function Header({
   backLink?: string;
 }) {
   const supabase = await createClient();
-  let profile: {
-    first_name: string | null;
-    calendar_token: string | null;
-  } | null = null;
+  let profile: Profile | null = null;
   let errorMessage: string | null = null;
 
   const {

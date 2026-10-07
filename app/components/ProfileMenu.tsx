@@ -47,7 +47,7 @@ export default function ProfileMenu({
     <div ref={menuRef} className="relative">
       <button
         type="button"
-        aria-label="Öppna profilmenyn"
+        aria-label={`Öppna profilmenyn, ${initial}`}
         aria-expanded={isOpen}
         aria-controls="profile-menu"
         onClick={() => setIsOpen((open) => !open)}
