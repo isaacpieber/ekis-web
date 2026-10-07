@@ -22,10 +22,15 @@ export type SchoolEvent = {
   end_time: string | null;
   is_all_day: boolean | null;
   source: string | null;
+  created_at: string;
 };
 
 function formatDisplayDate(date: string) {
   return format(parseISO(date), "d MMMM yyyy", { locale: sv });
+}
+
+function formatCreatedDate(dateStr: string) {
+  return format(parseISO(dateStr), "d MMMM yyyy 'kl.' HH:mm", { locale: sv });
 }
 
 function formatDisplayTime(event: SchoolEvent) {
@@ -141,23 +146,12 @@ export default function EventCard({
         </p>
       )}
       <div className="mb-1 flex items-start justify-between gap-3">
-        {hasDescription ? (
-          <h3 className="min-w-0 flex-1 text-lg font-bold text-text-main">
-            <button
-              type="button"
-              aria-haspopup="dialog"
-              onClick={() => setIsModalOpen(true)}
-              className="flex min-h-11 min-w-11 w-full flex-col items-start justify-center rounded-xl text-left cursor-pointer focus:ring-2 focus:ring-primary focus:outline-none"
-            >
-              {event.title}
-              <span className="text-sm font-normal text-text-muted">
-                {eventMetadata}
-              </span>
-            </button>
+        <div className="min-w-0 flex-1">
+          <h3 className="break-words text-lg font-bold text-text-main">
+            {event.title}
           </h3>
-        ) : (
-          <h3 className="text-lg font-bold text-text-main">{event.title}</h3>
-        )}
+          <p className="mt-1 text-sm text-text-muted">{eventMetadata}</p>
+        </div>
         <div
           ref={menuRef}
           onClick={(event) => event.stopPropagation()}
@@ -220,9 +214,6 @@ export default function EventCard({
           )}
         </div>
       </div>
-      {!hasDescription && (
-        <p className="mb-4 text-sm text-text-muted">{eventMetadata}</p>
-      )}
       {isModalOpen && (
         <dialog
           ref={dialogRef}
@@ -281,6 +272,13 @@ export default function EventCard({
               <p className="text-sm italic text-text-muted">
                 Ingen ytterligare beskrivning.
               </p>
+            )}
+            {event.created_at && (
+              <div className="mt-6 border-t border-surface-dark pt-4">
+                <p className="text-xs text-text-muted">
+                  Skapad {formatCreatedDate(event.created_at)}
+                </p>
+              </div>
             )}
           </div>
         </dialog>
