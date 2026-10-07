@@ -6,6 +6,7 @@ import { sv } from "date-fns/locale/sv";
 import Link from "next/link";
 
 import { deleteEvent } from "@/app/actions/deleteEvent";
+import type { Tables } from "@/utils/supabase/database.types";
 
 const sourceLabels: Record<string, string> = {
   School: "Skola",
@@ -13,17 +14,7 @@ const sourceLabels: Record<string, string> = {
   Other: "Övrigt",
 };
 
-export type SchoolEvent = {
-  id: string;
-  title: string;
-  description: string | null;
-  event_date: string;
-  start_time: string | null;
-  end_time: string | null;
-  is_all_day: boolean | null;
-  source: string | null;
-  created_at: string;
-};
+export type SchoolEvent = Tables<"school_events">;
 
 function formatDisplayDate(date: string) {
   return format(parseISO(date), "d MMMM yyyy", { locale: sv });
