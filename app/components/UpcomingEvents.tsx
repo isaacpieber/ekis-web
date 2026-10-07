@@ -40,7 +40,7 @@ export default async function UpcomingEvents() {
   const { data: events, error } = await supabase
     .from("school_events")
     .select(
-      "id, title, description, event_date, start_time, end_time, is_all_day, source",
+      "id, title, description, event_date, start_time, end_time, is_all_day, source, created_at",
     )
     .order("event_date", { ascending: true });
 

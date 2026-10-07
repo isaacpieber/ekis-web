@@ -6,6 +6,7 @@ import { sv } from "date-fns/locale/sv";
 import Link from "next/link";
 
 import { deleteEvent } from "@/app/actions/deleteEvent";
+import type { Tables } from "@/utils/supabase/database.types";
 
 const sourceLabels: Record<string, string> = {
   School: "Skola",
@@ -13,19 +14,14 @@ const sourceLabels: Record<string, string> = {
   Other: "Övrigt",
 };
 
-export type SchoolEvent = {
-  id: string;
-  title: string;
-  description: string | null;
-  event_date: string;
-  start_time: string | null;
-  end_time: string | null;
-  is_all_day: boolean | null;
-  source: string | null;
-};
+export type SchoolEvent = Tables<"school_events">;
 
 function formatDisplayDate(date: string) {
   return format(parseISO(date), "d MMMM yyyy", { locale: sv });
+}
+
+function formatCreatedDate(dateStr: string) {
+  return format(parseISO(dateStr), "d MMMM yyyy 'kl.' HH:mm", { locale: sv });
 }
 
 function formatDisplayTime(event: SchoolEvent) {
@@ -46,10 +42,16 @@ export default function EventCard({
   event: SchoolEvent;
   canEdit: boolean;
 }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const hasDescription = Boolean(
+    event.description && event.description.trim() !== "",
+  );
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -64,6 +66,26 @@ export default function EventCard({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!isModalOpen) {
+      return;
+    }
+
+    const dialog = dialogRef.current;
+    if (!dialog) {
+      return;
+    }
+
+    dialog.showModal();
+    closeButtonRef.current?.focus();
+
+    return () => {
+      if (dialog.open) {
+        dialog.close();
+      }
+    };
+  }, [isModalOpen]);
 
   function handleDelete() {
     setIsMenuOpen(false);
@@ -92,6 +114,15 @@ export default function EventCard({
   }
 
   const time = formatDisplayTime(event);
+  const eventMetadata = (
+    <>
+      {formatDisplayDate(event.event_date)}
+      {time && <> · {time}</>}
+      {event.source && (
+        <> · {sourceLabels[event.source] ?? event.source}</>
+      )}
+    </>
+  );
 
   return (
     <article className="relative mb-4 rounded-xl border border-surface-dark bg-surface p-5 shadow-sm">
@@ -106,8 +137,17 @@ export default function EventCard({
         </p>
       )}
       <div className="mb-1 flex items-start justify-between gap-3">
-        <h3 className="text-lg font-bold text-text-main">{event.title}</h3>
-        <div ref={menuRef} className="relative shrink-0">
+        <div className="min-w-0 flex-1">
+          <h3 className="break-words text-lg font-bold text-text-main">
+            {event.title}
+          </h3>
+          <p className="mt-1 text-sm text-text-muted">{eventMetadata}</p>
+        </div>
+        <div
+          ref={menuRef}
+          onClick={(event) => event.stopPropagation()}
+          className="relative shrink-0"
+        >
           <button
             type="button"
             aria-label={`Alternativ för ${event.title}`}
@@ -132,6 +172,18 @@ export default function EventCard({
               id={`event-menu-${event.id}`}
               className="absolute right-0 z-10 mt-2 w-56 rounded-xl border border-surface-dark bg-surface p-1 shadow-md"
             >
+              <button
+                type="button"
+                aria-haspopup="dialog"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setIsMenuOpen(false);
+                  setIsModalOpen(true);
+                }}
+                className="flex min-h-11 min-w-11 w-full items-center rounded-xl px-3 text-left font-medium text-text-main transition-colors hover:bg-surface-dark focus:ring-2 focus:ring-primary focus:outline-none"
+              >
+                Visa
+              </button>
               {canEdit && (
                 <Link
                   href={`/parents/events/${event.id}`}
@@ -153,13 +205,75 @@ export default function EventCard({
           )}
         </div>
       </div>
-      <p className="mb-4 text-sm text-text-muted">
-        {formatDisplayDate(event.event_date)}
-        {time && <> · {time}</>}
-        {event.source && (
-          <> · {sourceLabels[event.source] ?? event.source}</>
-        )}
-      </p>
+      {isModalOpen && (
+        <dialog
+          ref={dialogRef}
+          aria-labelledby={`event-dialog-title-${event.id}`}
+          aria-modal="true"
+          onCancel={(event) => {
+            event.preventDefault();
+            setIsModalOpen(false);
+          }}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              setIsModalOpen(false);
+            }
+          }}
+          className="fixed inset-0 m-0 flex h-full w-full max-h-none max-w-none items-end justify-center border-0 bg-transparent p-0 backdrop:bg-text-main/50 sm:items-center sm:p-4"
+        >
+          <div className="max-h-screen w-full overflow-y-auto rounded-t-xl bg-surface p-6 pb-8 shadow-2xl sm:max-w-md sm:rounded-xl">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <h2
+                id={`event-dialog-title-${event.id}`}
+                className="min-w-0 flex-1 text-xl font-bold text-text-main"
+              >
+                {event.title}
+              </h2>
+              <button
+                ref={closeButtonRef}
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="flex min-h-11 min-w-11 items-center justify-center rounded-xl bg-surface-dark text-text-muted hover:text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
+                aria-label="Stäng"
+              >
+                <svg
+                  aria-hidden="true"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <p className="mb-6 text-sm font-medium text-text-muted">
+              {eventMetadata}
+            </p>
+            {hasDescription ? (
+              <div className="text-base leading-relaxed whitespace-pre-wrap text-text-main">
+                {event.description}
+              </div>
+            ) : (
+              <p className="text-sm italic text-text-muted">
+                Ingen ytterligare beskrivning.
+              </p>
+            )}
+            {event.created_at && (
+              <div className="mt-6 border-t border-surface-dark pt-4">
+                <p className="text-xs text-text-muted">
+                  Skapad {formatCreatedDate(event.created_at)}
+                </p>
+              </div>
+            )}
+          </div>
+        </dialog>
+      )}
     </article>
   );
 }

@@ -50,7 +50,7 @@ export default async function EditEventPage({
   const { data: event, error } = await supabase
     .from("school_events")
     .select(
-      "id, title, description, event_date, start_time, end_time, is_all_day, source",
+      "id, title, description, event_date, start_time, end_time, is_all_day, source, created_at",
     )
     .eq("id", id)
     .maybeSingle();
