@@ -4,6 +4,7 @@ import { formatInTimeZone } from "date-fns-tz";
 
 import CalendarSubscribeButton from "@/app/components/CalendarSubscribeButton";
 import EventCard, { type SchoolEvent } from "@/app/components/EventCard";
+import ProfileMenu from "@/app/components/ProfileMenu";
 import { createClient } from "@/utils/supabase/server";
 
 const stockholmTimeZone = "Europe/Stockholm";
@@ -23,10 +24,11 @@ export default async function UpcomingEvents() {
 
   let canEdit = false;
   let calendarToken: string | null = null;
+  let initial = "E";
   if (user) {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("role, calendar_token")
+      .select("role, calendar_token, first_name")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -38,6 +40,9 @@ export default async function UpcomingEvents() {
 
     canEdit = profile?.role === "parent";
     calendarToken = profile?.calendar_token ?? null;
+    initial = profile?.first_name
+      ? profile.first_name.charAt(0).toUpperCase()
+      : "E";
   }
 
   const { data: events, error } = await supabase
@@ -82,12 +87,15 @@ export default async function UpcomingEvents() {
       aria-labelledby="upcoming-events-heading"
       className="max-w-md mx-auto p-4"
     >
-      <h2
-        id="upcoming-events-heading"
-        className="text-lg font-bold text-text-main mb-4"
-      >
-        Kommande händelser
-      </h2>
+      <div className="flex w-full items-center justify-between mb-6">
+        <h2
+          id="upcoming-events-heading"
+          className="text-lg font-bold text-text-main"
+        >
+          Kommande händelser
+        </h2>
+        <ProfileMenu initial={initial} />
+      </div>
       {upcomingEvents.length === 0 ? (
         <p className="text-text-muted">Inga inplanerade händelser</p>
       ) : (
