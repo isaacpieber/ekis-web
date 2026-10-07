@@ -1,9 +1,8 @@
-import { addDays, format, parseISO } from "date-fns";
-import { sv } from "date-fns/locale/sv";
+import { parseISO } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
+import Link from "next/link";
 
 import EventCard, { type SchoolEvent } from "@/app/components/EventCard";
-import ProfileMenu from "@/app/components/ProfileMenu";
 import { createClient } from "@/utils/supabase/server";
 
 const stockholmTimeZone = "Europe/Stockholm";
@@ -22,12 +21,10 @@ export default async function UpcomingEvents() {
   }
 
   let canEdit = false;
-  let calendarToken: string | null = null;
-  let initial = "E";
   if (user) {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("role, calendar_token, first_name")
+      .select("role")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -38,10 +35,6 @@ export default async function UpcomingEvents() {
     }
 
     canEdit = profile?.role === "parent";
-    calendarToken = profile?.calendar_token ?? null;
-    initial = profile?.first_name
-      ? profile.first_name.charAt(0).toUpperCase()
-      : "E";
   }
 
   const { data: events, error } = await supabase
@@ -83,18 +76,9 @@ export default async function UpcomingEvents() {
 
   return (
     <section
-      aria-labelledby="upcoming-events-heading"
-      className="max-w-md mx-auto p-4"
+      aria-labelledby="page-title"
+      className="w-full"
     >
-      <div className="flex w-full items-center justify-between mb-6">
-        <h2
-          id="upcoming-events-heading"
-          className="text-lg font-bold text-text-main"
-        >
-          Kommande händelser
-        </h2>
-        <ProfileMenu initial={initial} calendarToken={calendarToken} />
-      </div>
       {upcomingEvents.length === 0 ? (
         <p className="text-text-muted">Inga inplanerade händelser</p>
       ) : (
@@ -113,7 +97,7 @@ export default async function UpcomingEvents() {
           </div>
         </section>
       )}
-      <a
+      <Link
         href="/parents/events"
         aria-label="Hantera händelser"
         className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-surface shadow-lg hover:bg-primary-hover focus:ring-2 focus:ring-primary focus:outline-none"
@@ -129,7 +113,7 @@ export default async function UpcomingEvents() {
         >
           <path d="M12 5v14M5 12h14" />
         </svg>
-      </a>
+      </Link>
     </section>
   );
 }

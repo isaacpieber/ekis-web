@@ -4,6 +4,7 @@ import { getISOWeek, getISOWeekYear } from "date-fns";
 import { useState, type FormEvent } from "react";
 
 import { extractEvents } from "@/app/actions/extractEvents";
+import Header from "@/app/components/Header";
 
 function getCurrentIsoWeek() {
   const today = new Date();
@@ -46,10 +47,8 @@ export default function ParentEventsPage() {
 
   return (
     <main className="max-w-2xl mx-auto p-4">
+      <Header title="Extrahera händelse" backLink="/" />
       <section className="bg-surface rounded-xl p-6 shadow-sm border border-surface-dark">
-        <h1 className="text-text-main font-bold text-2xl mb-6">
-          Extrahera skolevenemang
-        </h1>
         <form onSubmit={handleSubmit}>
           <fieldset
             disabled={isLoading}

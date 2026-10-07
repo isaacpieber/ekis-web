@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 type CalendarSubscribeButtonProps = {
   token: string;
 };
@@ -9,15 +7,10 @@ type CalendarSubscribeButtonProps = {
 export default function CalendarSubscribeButton({
   token,
 }: CalendarSubscribeButtonProps) {
-  const [isAppleDevice, setIsAppleDevice] = useState(false);
-
-  useEffect(() => {
-    setIsAppleDevice(/iPhone|iPad|iPod|Mac/i.test(navigator.userAgent));
-  }, []);
-
   const handleSubscribe = async () => {
     const baseUrl = window.location.host;
     const calendarUrl = `https://${baseUrl}/api/calendar/feed/${token}`;
+    const isAppleDevice = /iPhone|iPad|iPod|Mac/i.test(navigator.userAgent);
 
     if (isAppleDevice) {
       window.location.href = `webcal://${baseUrl}/api/calendar/feed/${token}`;
