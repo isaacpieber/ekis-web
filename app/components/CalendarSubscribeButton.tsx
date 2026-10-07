@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 type CalendarSubscribeButtonProps = {
   token: string;
 };
@@ -9,15 +7,10 @@ type CalendarSubscribeButtonProps = {
 export default function CalendarSubscribeButton({
   token,
 }: CalendarSubscribeButtonProps) {
-  const [isAppleDevice, setIsAppleDevice] = useState(false);
-
-  useEffect(() => {
-    setIsAppleDevice(/iPhone|iPad|iPod|Mac/i.test(navigator.userAgent));
-  }, []);
-
   const handleSubscribe = async () => {
     const baseUrl = window.location.host;
     const calendarUrl = `https://${baseUrl}/api/calendar/feed/${token}`;
+    const isAppleDevice = /iPhone|iPad|iPod|Mac/i.test(navigator.userAgent);
 
     if (isAppleDevice) {
       window.location.href = `webcal://${baseUrl}/api/calendar/feed/${token}`;
@@ -41,7 +34,7 @@ export default function CalendarSubscribeButton({
     <button
       type="button"
       onClick={handleSubscribe}
-      className="flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-xl text-sm font-medium text-text-muted transition-colors hover:text-text-main focus:outline-none focus:underline"
+      className="w-full text-left px-4 py-3 rounded-xl text-text-main hover:bg-surface-dark transition-colors font-medium flex items-center gap-2"
     >
       <svg
         aria-hidden="true"
@@ -56,7 +49,7 @@ export default function CalendarSubscribeButton({
         <rect x="3" y="5" width="18" height="16" rx="2" />
         <path d="M16 3v4M8 3v4M3 11h18" />
       </svg>
-      Prenumerera på kalender
+      Prenumerera
     </button>
   );
 }

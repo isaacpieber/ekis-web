@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import EditEventForm from "@/app/components/EditEventForm";
+import Header from "@/app/components/Header";
 import { createClient } from "@/utils/supabase/server";
 
 const uuidPattern =
@@ -64,9 +65,7 @@ export default async function EditEventPage({
 
   return (
     <main className="mx-auto max-w-2xl p-4">
-      <h1 className="mb-6 text-2xl font-bold text-text-main">
-        Ändra händelse
-      </h1>
+      <Header title="Ändra händelse" backLink="/" />
       <EditEventForm event={event} />
     </main>
   );
