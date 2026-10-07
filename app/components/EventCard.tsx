@@ -46,10 +46,14 @@ export default function EventCard({
   event: SchoolEvent;
   canEdit: boolean;
 }) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const hasDescription = Boolean(
+    event.description && event.description.trim() !== "",
+  );
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -106,8 +110,44 @@ export default function EventCard({
         </p>
       )}
       <div className="mb-1 flex items-start justify-between gap-3">
-        <h3 className="text-lg font-bold text-text-main">{event.title}</h3>
-        <div ref={menuRef} className="relative shrink-0">
+        <h3 className="text-lg font-bold text-text-main">
+          {hasDescription ? (
+            <button
+              type="button"
+              aria-expanded={isExpanded}
+              aria-controls={`event-description-${event.id}`}
+              onClick={() => setIsExpanded((expanded) => !expanded)}
+              className="flex min-h-11 min-w-11 items-center rounded-xl text-left focus:ring-2 focus:ring-primary focus:outline-none"
+            >
+              <span className="flex items-center gap-2">
+                <span>{event.title}</span>
+                <svg
+                  aria-hidden="true"
+                  className={`h-5 w-5 shrink-0 text-text-muted transition-transform duration-200 ${
+                    isExpanded ? "rotate-180" : ""
+                  }`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </span>
+            </button>
+          ) : (
+            event.title
+          )}
+        </h3>
+        <div
+          ref={menuRef}
+          onClick={(event) => event.stopPropagation()}
+          className="relative shrink-0"
+        >
           <button
             type="button"
             aria-label={`Alternativ för ${event.title}`}
@@ -160,6 +200,15 @@ export default function EventCard({
           <> · {sourceLabels[event.source] ?? event.source}</>
         )}
       </p>
+      {hasDescription && (
+        <div
+          id={`event-description-${event.id}`}
+          hidden={!isExpanded}
+          className="mt-3 border-t border-surface-dark pt-3 text-sm whitespace-pre-wrap text-text-muted"
+        >
+          {event.description}
+        </div>
+      )}
     </article>
   );
 }
