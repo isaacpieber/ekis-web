@@ -35,7 +35,7 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
           {state.error}
         </p>
       )}
-      <div className="flex flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1">
         <label htmlFor="title" className="font-medium text-text-main">
           Titel
         </label>
@@ -51,11 +51,11 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
               title: inputEvent.target.value,
             }))
           }
-          className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
+          className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-base text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
         />
       </div>
 
-      <div className="flex flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1">
         <label htmlFor="description" className="font-medium text-text-main">
           Beskrivning
         </label>
@@ -70,11 +70,11 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
               description: inputEvent.target.value,
             }))
           }
-          className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
+          className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-base text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
         />
       </div>
 
-      <div className="flex flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1">
         <label htmlFor="event_date" className="font-medium text-text-main">
           Datum
         </label>
@@ -90,12 +90,12 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
               event_date: inputEvent.target.value,
             }))
           }
-          className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
+          className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-base text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-1">
+      <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-1">
           <label htmlFor="start_time" className="font-medium text-text-main">
             Starttid
           </label>
@@ -112,11 +112,11 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
                 ...(inputEvent.target.value ? { is_all_day: false } : {}),
               }))
             }
-            className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-text-main focus:ring-2 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-base text-text-main focus:ring-2 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 flex-col gap-1">
           <label htmlFor="end_time" className="font-medium text-text-main">
             Sluttid
           </label>
@@ -133,12 +133,12 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
                 ...(inputEvent.target.value ? { is_all_day: false } : {}),
               }))
             }
-            className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-text-main focus:ring-2 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-base text-text-main focus:ring-2 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
       </div>
 
-      <label className="flex min-h-[44px] items-center gap-3 font-medium text-text-main">
+      <label className="flex min-h-[44px] min-w-0 items-center gap-3 font-medium text-text-main">
         <input
           name="is_all_day"
           type="checkbox"
@@ -166,7 +166,7 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
         </>
       )}
 
-      <div className="flex flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1">
         <label htmlFor="source" className="font-medium text-text-main">
           Källa
         </label>
@@ -180,7 +180,7 @@ export default function EditEventForm({ event }: { event: SchoolEvent }) {
               source: inputEvent.target.value,
             }))
           }
-          className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
+          className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-surface p-3 text-base text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
         >
           <option value="">Ingen källa</option>
           {event.source &&
