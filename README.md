@@ -19,20 +19,14 @@ npx supabase secrets set AI_API_KEY=your-google-generative-ai-api-key
 Deploy the extraction functions with `npx supabase functions deploy extract-events`
 and `npx supabase functions deploy process-queue`. Before applying the queue
 schedule migration, replace `<YOUR_PROJECT_REF>` in its function URL and store
-the service-role key in Supabase Vault as `process_queue_service_role_key`.
+the `queue-worker` Secret API key in Supabase Vault as `process_queue_api_key`.
 Never commit the actual key. The migration schedules `process-ai-queue` every
 minute. Completed and failed queue records are purged after 30 days, and
 newsletter text is cleared as soon as a job reaches a terminal state.
 
-Add the service-role key to Vault once in the Supabase SQL editor before
-applying the schedule migration:
-
-```sql
-select vault.create_secret(
-  '<YOUR_SERVICE_ROLE_KEY>',
-  'process_queue_service_role_key'
-);
-```
+Create the `queue-worker` Secret API key in **Settings > API keys**, then add
+its value to **Database > Vault** with the name `process_queue_api_key` before
+applying the schedule migration.
 
 For deployed environments, configure `SUPABASE_SERVICE_ROLE_KEY` as a server-side environment variable or secret in your hosting platform. Do not use a `NEXT_PUBLIC_` prefix.
 

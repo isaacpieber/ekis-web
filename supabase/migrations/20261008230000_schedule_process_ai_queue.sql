@@ -1,7 +1,7 @@
 -- Replace <YOUR_PROJECT_REF> with your Supabase project ref before pushing
 -- these database changes.
--- Store the service-role key in Supabase Vault as
--- `process_queue_service_role_key`; do not put the actual key in this file.
+-- Store the `queue-worker` Secret API key in Supabase Vault as
+-- `process_queue_api_key`; do not put the actual key in this file.
 
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
@@ -15,14 +15,12 @@ select cron.schedule(
   with worker_key as (
     select decrypted_secret
     from vault.decrypted_secrets
-    where name = 'process_queue_service_role_key'
+    where name = 'process_queue_api_key'
     limit 1
   )
   select net.http_post(
     url := 'https://drhtjxfvivlhhthbofmt.supabase.co/functions/v1/process-queue',
     headers := jsonb_build_object(
-      'Authorization',
-      'Bearer ' || worker_key.decrypted_secret,
       'apikey', worker_key.decrypted_secret,
       'Content-Type',
       'application/json'
