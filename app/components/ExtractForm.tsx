@@ -62,7 +62,7 @@ export default function ExtractForm() {
             name="source"
             value={source}
             onChange={(event) => setSource(event.target.value)}
-            className="mb-4 min-h-[44px] w-full rounded-xl border border-surface-dark bg-background px-4 text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
+            className="mb-4 min-h-[44px] w-full rounded-xl border border-surface-dark bg-background px-4 text-base text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
           >
             <option value="School">Skola</option>
             <option value="Preschool">Förskola</option>
@@ -80,7 +80,7 @@ export default function ExtractForm() {
             type="week"
             value={week}
             onChange={(event) => setWeek(event.target.value)}
-            className="mb-4 min-h-[44px] w-full rounded-xl border border-surface-dark bg-background px-4 text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
+            className="mb-4 min-h-[44px] w-full rounded-xl border border-surface-dark bg-background px-4 text-base text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
             required
           />
 
@@ -96,7 +96,7 @@ export default function ExtractForm() {
             value={rawText}
             onChange={(event) => setRawText(event.target.value)}
             rows={16}
-            className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-background px-4 py-3 text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
+            className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-background px-4 py-3 text-base text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
             required
           />
 
