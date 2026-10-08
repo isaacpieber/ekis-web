@@ -26,7 +26,17 @@ export default function ExtractForm() {
     setErrorMessage(null);
 
     try {
-      const { events } = await extractEvents(rawText, week, source);
+      const result = await extractEvents(rawText, week, source);
+
+      if ("status" in result && result.status === "queued") {
+        setRawText("");
+        setSuccessMessage(
+          "AI är upptagen. Händelserna dyker upp i kalendern strax!",
+        );
+        return;
+      }
+
+      const { events } = result;
       const eventCount = events.length;
 
       setRawText("");

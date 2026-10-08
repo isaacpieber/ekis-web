@@ -85,11 +85,65 @@ export type Database = {
         };
         Relationships: [];
       };
+      extraction_jobs: {
+        Row: {
+          claimed_at: string | null;
+          created_at: string;
+          id: string;
+          last_error: string | null;
+          raw_text: string;
+          retry_count: number;
+          source: string;
+          status: string;
+          updated_at: string;
+          user_id: string;
+          week_label: string;
+        };
+        Insert: {
+          claimed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          last_error?: string | null;
+          raw_text: string;
+          retry_count?: number;
+          source: string;
+          status?: string;
+          updated_at?: string;
+          user_id: string;
+          week_label: string;
+        };
+        Update: {
+          claimed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          last_error?: string | null;
+          raw_text?: string;
+          retry_count?: number;
+          source?: string;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+          week_label?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      claim_extraction_jobs: {
+        Args: Record<PropertyKey, never>;
+        Returns: Database["public"]["Tables"]["extraction_jobs"]["Row"][];
+      };
+      finish_extraction_job: {
+        Args: {
+          p_events: Json | null;
+          p_error: string | null;
+          p_job_id: string;
+        };
+        Returns: string;
+      };
       [_ in never]: never;
     };
     Enums: {

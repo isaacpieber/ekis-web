@@ -1,40 +1,38 @@
 "use server";
 
-import { google } from "@ai-sdk/google";
-import { generateObject } from "ai";
-import { formatInTimeZone } from "date-fns-tz";
-import { z } from "zod";
+import {
+  FunctionsFetchError,
+  FunctionsHttpError,
+  FunctionsRelayError,
+} from "@supabase/supabase-js";
 
 import { createClient } from "@/utils/supabase/server";
+import type {
+  Tables,
+  TablesInsert,
+} from "@/utils/supabase/database.types";
 
 const MAX_NEWSLETTER_LENGTH = 50_000;
-const stockholmTimeZone = "Europe/Stockholm";
+const extractionUnavailableMessage =
+  "AI är upptagen. Extraktionen har lagts i kö och kommer att bearbetas i bakgrunden.";
 
-const schoolEventSchema = z.object({
-  title: z.string(),
-  description: z.string().optional(),
-  event_date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Must use YYYY-MM-DD format."),
-  start_time: z
-    .string()
-    .regex(
-      /^([01]\d|2[0-3]):[0-5]\d$/,
-      "Must use 24-hour HH:MM format.",
-    )
-    .optional(),
-  end_time: z
-    .string()
-    .regex(
-      /^([01]\d|2[0-3]):[0-5]\d$/,
-      "Must use 24-hour HH:MM format.",
-    )
-    .optional(),
-  is_all_day: z.boolean(),
-  source: z.enum(["School", "Preschool", "Other"]),
-});
+type ExtractedEvent = TablesInsert<"school_events">;
 
-export type SchoolEvent = z.infer<typeof schoolEventSchema>;
+type ExtractionResponse = {
+  success: true;
+  events: ExtractedEvent[];
+};
+
+function isTransientFunctionError(error: unknown) {
+  if (error instanceof FunctionsHttpError) {
+    return error.context.status === 429 || error.context.status >= 500;
+  }
+
+  return (
+    error instanceof FunctionsFetchError ||
+    error instanceof FunctionsRelayError
+  );
+}
 
 export async function extractEvents(
   rawText: string,
@@ -51,6 +49,14 @@ export async function extractEvents(
     throw new Error(
       `Newsletter text must not exceed ${MAX_NEWSLETTER_LENGTH.toLocaleString()} characters.`,
     );
+  }
+
+  if (!/^\d{4}-W(?:0[1-9]|[1-4]\d|5[0-3])$/.test(weekContext)) {
+    throw new Error("The newsletter week must use YYYY-Www format.");
+  }
+
+  if (!["School", "Preschool", "Other"].includes(selectedSource)) {
+    throw new Error("The selected source is not valid.");
   }
 
   const supabase = await createClient();
@@ -81,37 +87,57 @@ export async function extractEvents(
     throw new Error("Only parents can extract and create school events.");
   }
 
-  const today = formatInTimeZone(new Date(), stockholmTimeZone, "yyyy-MM-dd");
-  const { object: events } = await generateObject({
-    model: google("gemini-3.8-flash"),
-    output: "array",
-    schema: schoolEventSchema,
-    system: `You are a scheduling assistant for a family calendar.
+  const { data, error } = await supabase.functions.invoke<ExtractionResponse>(
+    "extract-events",
+    {
+      body: {
+        text: newsletterText,
+        source: selectedSource,
+        weekLabel: weekContext,
+      },
+    },
+  );
 
-Extract every distinct upcoming event from the supplied school newsletter. Include
-only events with a clear date. Today's current date is ${today}. Use this to
-accurately determine the year for any dates mentioned. The newsletter will likely
-be in Swedish, but your output must exactly follow the requested JSON schema.
-This newsletter was published during ${weekContext}. Use this specific week as the
-current baseline to accurately resolve any relative dates (e.g., "this Friday" or
-"next week"). Set the source to ${selectedSource} for all extracted events. Use
-YYYY-MM-DD dates and 24-hour HH:MM times. Set is_all_day to true when no specific
-start or end time is given. Do not duplicate events.`,
-    prompt: newsletterText,
-  });
+  if (error) {
+    if (!isTransientFunctionError(error)) {
+      throw new Error(`Unable to extract school events: ${error.message}`);
+    }
 
-  if (events.length === 0) {
-    return { success: true, events: [] };
+    const { error: queueError } = await supabase
+      .from("extraction_jobs")
+      .insert({
+        user_id: user.id,
+        raw_text: newsletterText,
+        source: selectedSource,
+        week_label: weekContext,
+      });
+
+    if (queueError) {
+      throw new Error(`Unable to queue school event extraction: ${queueError.message}`);
+    }
+
+    return {
+      status: "queued" as const,
+      message: extractionUnavailableMessage,
+    };
+  }
+
+  if (!data?.success) {
+    throw new Error("The extraction service returned an invalid response.");
+  }
+
+  if (data.events.length === 0) {
+    return { success: true as const, events: [] as Tables<"school_events">[] };
   }
 
   const { data: insertedEvents, error: insertError } = await supabase
     .from("school_events")
-    .insert(events)
+    .insert(data.events)
     .select();
 
   if (insertError) {
     throw new Error(`Unable to save school events: ${insertError.message}`);
   }
 
-  return { success: true, events: insertedEvents };
+  return { success: true as const, events: insertedEvents };
 }
