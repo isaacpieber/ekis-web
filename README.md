@@ -19,7 +19,9 @@ npx supabase secrets set AI_API_KEY=your-google-generative-ai-api-key
 Deploy the extraction functions with `npx supabase functions deploy extract-events`
 and `npx supabase functions deploy process-queue`. Configure a
 scheduled caller for `process-queue`; it must send the Supabase service-role key
-as its bearer token. Keep that key in the scheduler's secret store.
+as its bearer token. Keep that key in the scheduler's secret store. Completed
+and failed queue records are purged after 30 days, and newsletter text is
+cleared as soon as a job reaches a terminal state.
 
 For deployed environments, configure `SUPABASE_SERVICE_ROLE_KEY` as a server-side environment variable or secret in your hosting platform. Do not use a `NEXT_PUBLIC_` prefix.
 

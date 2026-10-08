@@ -1,16 +1,22 @@
 create table public.extraction_jobs (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  raw_text text not null check (char_length(raw_text) between 1 and 50000),
+  raw_text text not null check (char_length(raw_text) between 0 and 50000),
   source text not null check (source in ('School', 'Preschool', 'Other')),
   week_label text not null check (week_label ~ '^[0-9]{4}-W(0[1-9]|[1-4][0-9]|5[0-3])$'),
   status text not null default 'pending'
     check (status in ('pending', 'processing', 'completed', 'failed')),
   retry_count integer not null default 0 check (retry_count >= 0),
+  attempt_count smallint not null default 0 check (attempt_count between 0 and 6),
   last_error text,
   claimed_at timestamp with time zone,
+  claim_token uuid,
   created_at timestamp with time zone not null default timezone('utc'::text, now()),
-  updated_at timestamp with time zone not null default timezone('utc'::text, now())
+  updated_at timestamp with time zone not null default timezone('utc'::text, now()),
+  check (
+    (status in ('pending', 'processing') and char_length(raw_text) between 1 and 50000)
+    or (status in ('completed', 'failed') and raw_text = '')
+  )
 );
 
 create index extraction_jobs_pending_created_at_idx
@@ -34,9 +40,12 @@ create policy "Parents can queue their own extractions"
   to authenticated
   with check (
     user_id = (select auth.uid())
+    and char_length(raw_text) between 1 and 50000
     and status = 'pending'
     and retry_count = 0
+    and attempt_count = 0
     and claimed_at is null
+    and claim_token is null
     and last_error is null
     and exists (
       select 1
@@ -48,33 +57,62 @@ create policy "Parents can queue their own extractions"
 
 create function public.claim_extraction_jobs()
 returns setof public.extraction_jobs
-language sql
+language plpgsql
 security definer
 set search_path = ''
 as $$
+begin
+  if auth.role() is distinct from 'service_role' then
+    raise exception 'Only the service role can claim extraction jobs.';
+  end if;
+
+  delete from public.extraction_jobs
+  where status in ('completed', 'failed')
+    and updated_at < now() - interval '30 days';
+
+  update public.extraction_jobs
+  set status = 'failed',
+      raw_text = '',
+      claim_token = null,
+      claimed_at = null,
+      last_error = coalesce(last_error, 'Worker attempt limit reached after repeated timeouts.'),
+      updated_at = now()
+  where status = 'processing'
+    and claimed_at < now() - interval '10 minutes'
+    and attempt_count >= 6;
+
+  return query
   with candidates as (
     select jobs.id
     from public.extraction_jobs as jobs
-    where jobs.status = 'pending'
-      or (
-        jobs.status = 'processing'
-        and jobs.claimed_at < now() - interval '10 minutes'
-      )
+    where (
+      jobs.status = 'pending'
+      and jobs.attempt_count < 6
+    )
+    or (
+      jobs.status = 'processing'
+      and jobs.claimed_at < now() - interval '10 minutes'
+      and jobs.attempt_count < 6
+    )
     order by jobs.created_at
     for update skip locked
     limit 5
   )
   update public.extraction_jobs as jobs
   set status = 'processing',
+      attempt_count = jobs.attempt_count + 1,
+      claim_token = gen_random_uuid(),
       claimed_at = now(),
       updated_at = now()
   from candidates
   where jobs.id = candidates.id
   returning jobs.*;
+end;
 $$;
 
 create function public.finish_extraction_job(
   p_job_id uuid,
+  p_claim_token uuid,
   p_events jsonb,
   p_error text
 )
@@ -87,7 +125,7 @@ declare
   job public.extraction_jobs%rowtype;
   job_status text;
 begin
-  if current_setting('request.jwt.claim.role', true) is distinct from 'service_role' then
+  if auth.role() is distinct from 'service_role' then
     raise exception 'Only the service role can finish extraction jobs.';
   end if;
 
@@ -96,10 +134,11 @@ begin
   from public.extraction_jobs
   where id = p_job_id
     and status = 'processing'
+    and claim_token = p_claim_token
   for update;
 
   if not found then
-    return 'not_processing';
+    return 'not_claimed';
   end if;
 
   if p_error is null then
@@ -136,6 +175,8 @@ begin
 
     update public.extraction_jobs
     set status = 'completed',
+        raw_text = '',
+        claim_token = null,
         claimed_at = null,
         last_error = null,
         updated_at = now()
@@ -146,7 +187,15 @@ begin
 
   update public.extraction_jobs
   set retry_count = retry_count + 1,
-      status = case when retry_count + 1 > 5 then 'failed' else 'pending' end,
+      status = case
+        when retry_count + 1 > 5 or attempt_count >= 6 then 'failed'
+        else 'pending'
+      end,
+      raw_text = case
+        when retry_count + 1 > 5 or attempt_count >= 6 then ''
+        else raw_text
+      end,
+      claim_token = null,
       claimed_at = null,
       last_error = left(p_error, 2000),
       updated_at = now()
@@ -158,7 +207,8 @@ end;
 $$;
 
 revoke all on function public.claim_extraction_jobs() from public, anon, authenticated;
-revoke all on function public.finish_extraction_job(uuid, jsonb, text)
+revoke all on function public.finish_extraction_job(uuid, uuid, jsonb, text)
   from public, anon, authenticated;
 grant execute on function public.claim_extraction_jobs() to service_role;
-grant execute on function public.finish_extraction_job(uuid, jsonb, text) to service_role;
+grant execute on function public.finish_extraction_job(uuid, uuid, jsonb, text)
+  to service_role;

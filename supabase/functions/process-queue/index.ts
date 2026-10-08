@@ -6,6 +6,7 @@ import {
 } from "../_shared/extract.ts";
 
 type ExtractionJob = {
+  claim_token: string;
   id: string;
   raw_text: string;
   source: string;
@@ -52,6 +53,7 @@ Deno.serve(async (request) => {
   let completed = 0;
   let retried = 0;
   let failed = 0;
+  let skipped = 0;
   let processingErrors = 0;
 
   for (const job of jobs) {
@@ -76,6 +78,7 @@ Deno.serve(async (request) => {
       "finish_extraction_job",
       {
         p_job_id: job.id,
+        p_claim_token: job.claim_token,
         p_events: extractionError === null ? events : null,
         p_error: extractionError,
       },
@@ -92,6 +95,8 @@ Deno.serve(async (request) => {
       failed += 1;
     } else if (result === "pending") {
       retried += 1;
+    } else if (result === "not_claimed") {
+      skipped += 1;
     } else {
       processingErrors += 1;
     }
@@ -99,10 +104,10 @@ Deno.serve(async (request) => {
 
   if (processingErrors > 0) {
     return jsonResponse(
-      { processed: jobs.length, completed, retried, failed, processingErrors },
+      { processed: jobs.length, completed, retried, failed, skipped, processingErrors },
       500,
     );
   }
 
-  return jsonResponse({ processed: jobs.length, completed, retried, failed });
+  return jsonResponse({ processed: jobs.length, completed, retried, failed, skipped });
 });

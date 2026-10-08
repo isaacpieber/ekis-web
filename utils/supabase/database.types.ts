@@ -87,7 +87,9 @@ export type Database = {
       };
       extraction_jobs: {
         Row: {
+          attempt_count: number;
           claimed_at: string | null;
+          claim_token: string | null;
           created_at: string;
           id: string;
           last_error: string | null;
@@ -100,7 +102,9 @@ export type Database = {
           week_label: string;
         };
         Insert: {
+          attempt_count?: number;
           claimed_at?: string | null;
+          claim_token?: string | null;
           created_at?: string;
           id?: string;
           last_error?: string | null;
@@ -113,7 +117,9 @@ export type Database = {
           week_label: string;
         };
         Update: {
+          attempt_count?: number;
           claimed_at?: string | null;
+          claim_token?: string | null;
           created_at?: string;
           id?: string;
           last_error?: string | null;
@@ -138,6 +144,7 @@ export type Database = {
       };
       finish_extraction_job: {
         Args: {
+          p_claim_token: string;
           p_events: Json | null;
           p_error: string | null;
           p_job_id: string;
