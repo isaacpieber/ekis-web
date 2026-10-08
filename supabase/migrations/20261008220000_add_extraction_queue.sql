@@ -7,6 +7,7 @@ create table public.extraction_jobs (
   status text not null default 'pending'
     check (status in ('pending', 'processing', 'completed', 'failed')),
   retry_count integer not null default 0 check (retry_count >= 0),
+  next_attempt_at timestamp with time zone default now(),
   attempt_count smallint not null default 0 check (attempt_count between 0 and 6),
   last_error text,
   claimed_at timestamp with time zone,
@@ -26,6 +27,14 @@ create index extraction_jobs_pending_created_at_idx
 create index extraction_jobs_processing_claimed_at_idx
   on public.extraction_jobs (claimed_at)
   where status = 'processing';
+
+create index extraction_jobs_pending_next_attempt_idx
+  on public.extraction_jobs (next_attempt_at, created_at)
+  where status = 'pending';
+
+create index extraction_jobs_terminal_updated_at_idx
+  on public.extraction_jobs (updated_at)
+  where status in ('completed', 'failed');
 
 alter table public.extraction_jobs enable row level security;
 
@@ -75,6 +84,7 @@ begin
       raw_text = '',
       claim_token = null,
       claimed_at = null,
+      next_attempt_at = null,
       last_error = coalesce(last_error, 'Worker attempt limit reached after repeated timeouts.'),
       updated_at = now()
   where status = 'processing'
@@ -88,6 +98,7 @@ begin
     where (
       jobs.status = 'pending'
       and jobs.attempt_count < 6
+      and jobs.next_attempt_at <= now()
     )
     or (
       jobs.status = 'processing'
@@ -178,6 +189,7 @@ begin
         raw_text = '',
         claim_token = null,
         claimed_at = null,
+        next_attempt_at = null,
         last_error = null,
         updated_at = now()
     where id = p_job_id;
@@ -194,6 +206,13 @@ begin
       raw_text = case
         when retry_count + 1 > 5 or attempt_count >= 6 then ''
         else raw_text
+      end,
+      next_attempt_at = case
+        when retry_count + 1 > 5 or attempt_count >= 6 then null
+        else now() + least(
+          interval '1 minute' * power(2::double precision, retry_count),
+          interval '30 minutes'
+        )
       end,
       claim_token = null,
       claimed_at = null,

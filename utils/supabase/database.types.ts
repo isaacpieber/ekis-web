@@ -93,6 +93,7 @@ export type Database = {
           created_at: string;
           id: string;
           last_error: string | null;
+          next_attempt_at: string | null;
           raw_text: string;
           retry_count: number;
           source: string;
@@ -108,6 +109,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           last_error?: string | null;
+          next_attempt_at?: string | null;
           raw_text: string;
           retry_count?: number;
           source: string;
@@ -123,6 +125,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           last_error?: string | null;
+          next_attempt_at?: string | null;
           raw_text?: string;
           retry_count?: number;
           source?: string;
