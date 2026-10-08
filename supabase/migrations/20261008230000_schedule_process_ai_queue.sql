@@ -19,7 +19,7 @@ select cron.schedule(
     limit 1
   )
   select net.http_post(
-    url := 'https://<YOUR_PROJECT_REF>.supabase.co/functions/v1/process-queue',
+    url := 'https://drhtjxfvivlhhthbofmt.supabase.co/functions/v1/process-queue',
     headers := jsonb_build_object(
       'Authorization',
       'Bearer ' || worker_key.decrypted_secret,
