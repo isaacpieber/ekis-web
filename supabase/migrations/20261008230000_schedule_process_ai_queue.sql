@@ -1,6 +1,6 @@
 -- Replace <YOUR_PROJECT_REF> with your Supabase project ref before pushing
 -- these database changes.
--- Store the `queue-worker` Secret API key in Supabase Vault as
+-- Store the `queue_worker` Secret API key in Supabase Vault as
 -- `process_queue_api_key`; do not put the actual key in this file.
 
 create extension if not exists pg_cron;

@@ -19,7 +19,7 @@ const jsonResponse = (body: unknown, status = 200) =>
 
 export default {
   fetch: withSupabase(
-    { auth: "secret:queue-worker" },
+    { auth: "secret:queue_worker" },
     async (request, { supabaseAdmin: supabase }) => {
       if (request.method !== "POST") {
         return jsonResponse({ error: "Method not allowed." }, 405);
