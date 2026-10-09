@@ -6,9 +6,31 @@ Next.js App Router application with Supabase SSR authentication support.
 
 1. Copy `.env.example` to `.env.local` and provide the Supabase project URL and publishable key.
 2. Set `SUPABASE_SERVICE_ROLE_KEY` to the service-role key from your Supabase project's API settings. This is a server-only secret used by the calendar download route; do not commit it or expose it to browser code.
-3. Set `GOOGLE_GENERATIVE_AI_API_KEY` to your Google Generative AI API key.
-4. Install dependencies with `npm install`.
-5. Start the application with `npm run dev`.
+3. Install dependencies with `npm install`.
+4. Start the application with `npm run dev`.
+
+Set `AI_API_KEY` as a Supabase Edge Function secret; do not add it to the
+Next.js environment or expose it to the browser:
+
+```bash
+npx supabase secrets set AI_API_KEY=your-google-generative-ai-api-key
+```
+
+Deploy the extraction functions with `npx supabase functions deploy extract-events`
+and `npx supabase functions deploy process-queue`. Before applying the queue
+schedule migration, store the `queue_worker` Secret API key in Supabase Vault as
+`process_queue_api_key`, along with the environment's project URL as
+`process_queue_project_url` (for example, `https://<project-ref>.supabase.co`).
+Never commit the actual key. The migration
+schedules `process-ai-queue` every minute.
+Failed jobs retry with exponential backoff; completed and failed queue records
+are purged after 30 days, and newsletter text is cleared as soon as a job
+reaches a terminal state.
+
+Create the `queue_worker` Secret API key in **Settings > API keys**, then add
+its value to **Database > Vault** with the name `process_queue_api_key` before
+applying the schedule migration. Add the project URL to Vault with the name
+`process_queue_project_url` as well.
 
 For deployed environments, configure `SUPABASE_SERVICE_ROLE_KEY` as a server-side environment variable or secret in your hosting platform. Do not use a `NEXT_PUBLIC_` prefix.
 
