@@ -21,7 +21,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="se">
+    <html lang="sv">
       <body>{children}</body>
     </html>
   );
