@@ -16,13 +16,13 @@ export default async function Home() {
     );
   }
 
-  let pendingJobs = null;
+  let activeJobs = null;
   if (user) {
     const { data, error } = await supabase
       .from("extraction_jobs")
       .select("id, week_label, source")
       .eq("user_id", user.id)
-      .eq("status", "pending");
+      .in("status", ["pending", "processing"]);
 
     if (error) {
       throw new Error(
@@ -30,14 +30,14 @@ export default async function Home() {
       );
     }
 
-    pendingJobs = data;
+    activeJobs = data;
   }
 
   return (
     <main className="mx-auto max-w-md p-4">
       <Header title="Kommande händelser" />
-      {user && pendingJobs && pendingJobs.length > 0 && (
-        <JobStatusBanner jobs={pendingJobs} userId={user.id} />
+      {user && activeJobs && activeJobs.length > 0 && (
+        <JobStatusBanner jobs={activeJobs} userId={user.id} />
       )}
       <UpcomingEvents />
     </main>

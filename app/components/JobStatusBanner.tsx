@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/client";
 
-type PendingJob = {
+type ActiveJob = {
   id: string;
   source: string;
   week_label: string;
@@ -17,7 +17,7 @@ const sourceLabels: Record<string, string> = {
   Other: "Annat",
 };
 
-function formatJobDetails(job: PendingJob) {
+function formatJobDetails(job: ActiveJob) {
   const source = sourceLabels[job.source] ?? job.source;
   const week = job.week_label.replace(/^\d{4}-W/, "Vecka ");
 
@@ -28,14 +28,45 @@ export default function JobStatusBanner({
   jobs,
   userId,
 }: {
-  jobs: PendingJob[];
+  jobs: ActiveJob[];
   userId: string;
 }) {
   const router = useRouter();
 
   useEffect(() => {
     const supabase = createClient();
-    const pendingJobIds = new Set(jobs.map((job) => job.id));
+    const activeJobIds = new Set(jobs.map((job) => job.id));
+    let refreshRequested = false;
+
+    function refreshOnce() {
+      if (!refreshRequested) {
+        refreshRequested = true;
+        router.refresh();
+      }
+    }
+
+    async function recheckJobStatuses() {
+      const { data, error } = await supabase
+        .from("extraction_jobs")
+        .select("id, status")
+        .in("id", Array.from(activeJobIds));
+
+      if (error) {
+        console.error("Unable to recheck extraction job statuses:", error);
+        return;
+      }
+
+      if (
+        data.some(
+          (job) =>
+            activeJobIds.has(job.id) &&
+            (job.status === "completed" || job.status === "failed"),
+        )
+      ) {
+        refreshOnce();
+      }
+    }
+
     const channel = supabase
       .channel(`extraction-jobs-${userId}`)
       .on(
@@ -49,14 +80,20 @@ export default function JobStatusBanner({
         (payload) => {
           const { id, status } = payload.new;
           if (
-            pendingJobIds.has(id) &&
+            activeJobIds.has(id) &&
             (status === "completed" || status === "failed")
           ) {
-            router.refresh();
+            refreshOnce();
           }
         },
       )
-      .subscribe();
+      .subscribe((status, error) => {
+        if (status === "SUBSCRIBED") {
+          void recheckJobStatuses();
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          console.error("Supabase Realtime subscription failed:", error);
+        }
+      });
 
     return () => {
       void supabase.removeChannel(channel);
