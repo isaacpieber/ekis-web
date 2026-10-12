@@ -1,10 +1,44 @@
 import Header from "@/app/components/Header";
+import JobStatusBanner from "@/app/components/JobStatusBanner";
 import UpcomingEvents from "@/app/components/UpcomingEvents";
+import { createClient } from "@/utils/supabase/server";
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError) {
+    throw new Error(
+      `Det gick inte att verifiera användaren: ${userError.message}`,
+    );
+  }
+
+  let pendingJobs = null;
+  if (user) {
+    const { data, error } = await supabase
+      .from("extraction_jobs")
+      .select("id, week_label, source")
+      .eq("user_id", user.id)
+      .eq("status", "pending");
+
+    if (error) {
+      throw new Error(
+        `Det gick inte att läsa extraktionsjobb: ${error.message}`,
+      );
+    }
+
+    pendingJobs = data;
+  }
+
   return (
     <main className="mx-auto max-w-md p-4">
       <Header title="Kommande händelser" />
+      {user && pendingJobs && pendingJobs.length > 0 && (
+        <JobStatusBanner jobs={pendingJobs} userId={user.id} />
+      )}
       <UpcomingEvents />
     </main>
   );
