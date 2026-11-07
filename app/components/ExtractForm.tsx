@@ -1,14 +1,64 @@
 "use client";
 
-import { getISOWeek, getISOWeekYear } from "date-fns";
+import {
+  addWeeks,
+  format,
+  getISOWeek,
+  getISOWeekYear,
+  startOfISOWeekYear,
+} from "date-fns";
 import { useState, type FormEvent } from "react";
 
 import { extractEvents } from "@/app/actions/extractEvents";
+import {
+  DatePickerFormField,
+  SelectFormField,
+  TextAreaFormField,
+} from "@/app/components/FormControls";
 
 function getCurrentIsoWeek() {
   const today = new Date();
 
   return `${getISOWeekYear(today)}-W${String(getISOWeek(today)).padStart(2, "0")}`;
+}
+
+function getDateForIsoWeek(week: string) {
+  const match = /^(\d{4})-W(\d{2})$/.exec(week);
+
+  if (!match) {
+    return "";
+  }
+
+  const year = Number(match[1]);
+  const weekNumber = Number(match[2]);
+  const januaryFourth = new Date(0);
+  januaryFourth.setFullYear(year, 0, 4);
+  januaryFourth.setHours(12, 0, 0, 0);
+
+  if (weekNumber < 1 || weekNumber > 53) {
+    return "";
+  }
+
+  const date = addWeeks(
+    startOfISOWeekYear(januaryFourth),
+    weekNumber - 1,
+  );
+
+  if (getISOWeekYear(date) !== year || getISOWeek(date) !== weekNumber) {
+    return "";
+  }
+
+  return format(date, "yyyy-MM-dd");
+}
+
+function getIsoWeekForDate(value: string) {
+  const date = new Date(`${value}T12:00:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return `${getISOWeekYear(date)}-W${String(getISOWeek(date)).padStart(2, "0")}`;
 }
 
 export default function ExtractForm() {
@@ -18,6 +68,14 @@ export default function ExtractForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  function handleSelectWeekDate(value: string) {
+    const selectedWeek = getIsoWeekForDate(value);
+
+    if (selectedWeek) {
+      setWeek(selectedWeek);
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -46,57 +104,42 @@ export default function ExtractForm() {
   return (
     <section className="rounded-xl border border-surface-dark bg-surface p-6 shadow-sm">
       <form onSubmit={handleSubmit}>
-        <fieldset disabled={isLoading} className="m-0 border-0 p-0">
+        <fieldset disabled={isLoading} className="m-0 min-w-0 border-0 p-0">
           <legend className="mb-3 font-medium text-text-muted">
             Nyhetsbrevets uppgifter
           </legend>
-          <label
-            htmlFor="newsletter-source"
-            className="mb-1 block font-medium text-text-main"
-          >
-            Källa
-          </label>
-          <select
+          <SelectFormField
             id="newsletter-source"
             name="source"
+            label="Källa"
             value={source}
-            onChange={(event) => setSource(event.target.value)}
-            className="mb-4 min-h-[44px] w-full rounded-xl border border-surface-dark bg-background px-4 text-base text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
-          >
-            <option value="School">Skola</option>
-            <option value="Preschool">Förskola</option>
-          </select>
-
-          <label
-            htmlFor="newsletter-week"
-            className="mb-1 block font-medium text-text-main"
-          >
-            Nyhetsbrevets vecka
-          </label>
-          <input
-            id="newsletter-week"
-            name="week"
-            type="week"
-            value={week}
-            onChange={(event) => setWeek(event.target.value)}
-            className="mb-4 min-h-[44px] w-full rounded-xl border border-surface-dark bg-background px-4 text-base text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
-            required
+            onChange={setSource}
+            options={[
+              { value: "School", label: "Skola" },
+              { value: "Preschool", label: "Förskola" },
+            ]}
+            className="mb-4"
           />
 
-          <label
-            htmlFor="newsletter-text"
-            className="mb-1 block font-medium text-text-main"
-          >
-            Nyhetsbrevstext
-          </label>
-          <textarea
+          <DatePickerFormField
+            id="newsletter-week"
+            label="Nyhetsbrevets vecka"
+            value={getDateForIsoWeek(week)}
+            onChange={handleSelectWeekDate}
+            isRequired
+            description={`Vald vecka: ${week}`}
+            className="mb-4"
+          />
+          <input type="hidden" name="week" value={week} />
+
+          <TextAreaFormField
             id="newsletter-text"
             name="rawText"
+            label="Nyhetsbrevstext"
             value={rawText}
-            onChange={(event) => setRawText(event.target.value)}
+            onChange={setRawText}
             rows={16}
-            className="min-h-[44px] w-full rounded-xl border border-surface-dark bg-background px-4 py-3 text-base text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
-            required
+            isRequired
           />
 
           <button
