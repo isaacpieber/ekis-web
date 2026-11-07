@@ -123,7 +123,7 @@ export default function ExtractForm() {
   return (
     <section className="rounded-xl border border-surface-dark bg-surface p-6 shadow-sm">
       <form onSubmit={handleSubmit}>
-        <fieldset disabled={isLoading} className="m-0 border-0 p-0">
+        <fieldset disabled={isLoading} className="m-0 min-w-0 border-0 p-0">
           <legend className="mb-3 font-medium text-text-muted">
             Nyhetsbrevets uppgifter
           </legend>
@@ -157,7 +157,9 @@ export default function ExtractForm() {
               type="week"
               value={week}
               onChange={(event) => setWeek(event.target.value)}
-              className="box-border min-h-[44px] w-full min-w-0 rounded-xl border border-surface-dark bg-background px-4 pr-12 text-base text-text-main focus:ring-2 focus:ring-primary focus:outline-none"
+              className={`box-border min-h-[44px] w-full min-w-0 rounded-xl border border-surface-dark bg-background px-4 text-base text-text-main focus:ring-2 focus:ring-primary focus:outline-none ${
+                supportsWeekInput === false ? "pr-12" : ""
+              }`}
               required
             />
             {supportsWeekInput === false && (
