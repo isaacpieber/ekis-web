@@ -26,22 +26,11 @@ export default function ExtractForm() {
     setErrorMessage(null);
 
     try {
-      const result = await extractEvents(rawText, week, source);
-
-      if ("status" in result && result.status === "queued") {
-        setRawText("");
-        setSuccessMessage(
-          "AI är upptagen. Händelserna dyker upp i kalendern strax!",
-        );
-        return;
-      }
-
-      const { events } = result;
-      const eventCount = events.length;
+      await extractEvents(rawText, week, source);
 
       setRawText("");
       setSuccessMessage(
-        `${eventCount} ${eventCount === 1 ? "händelse har" : "händelser har"} sparats i databasen.`,
+        "Extraktionen har lagts i kö och bearbetas i bakgrunden. Händelserna visas i kalendern när de är klara.",
       );
     } catch (error) {
       setErrorMessage(
@@ -114,7 +103,7 @@ export default function ExtractForm() {
             type="submit"
             className="mt-4 min-h-[44px] w-full rounded-xl bg-primary font-medium text-white hover:bg-primary-hover"
           >
-            {isLoading ? "Extraherar..." : "Extrahera datum"}
+            {isLoading ? "Lägger i kö..." : "Extrahera datum"}
           </button>
         </fieldset>
       </form>
