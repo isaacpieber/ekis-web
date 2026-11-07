@@ -157,7 +157,7 @@ export default function ExtractForm() {
               type="week"
               value={week}
               onChange={(event) => setWeek(event.target.value)}
-              className={`box-border min-h-[44px] w-full min-w-0 rounded-xl border border-surface-dark bg-background px-4 text-base text-text-main focus:ring-2 focus:ring-primary focus:outline-none ${
+              className={`box-border min-h-[44px] w-full min-w-0 max-w-full rounded-xl border border-surface-dark bg-background px-4 text-base text-text-main focus:ring-2 focus:ring-primary focus:outline-none ${
                 supportsWeekInput === false ? "pr-12" : ""
               }`}
               required
