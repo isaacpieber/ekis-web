@@ -2,10 +2,13 @@
 
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { TextFormField } from "@/app/components/FormControls";
 import { createClient } from "../../utils/supabase/client";
 
 export function LoginForm() {
   const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -39,31 +42,26 @@ export function LoginForm() {
       <section className="w-full max-w-md bg-surface rounded-xl p-6 shadow-sm border border-surface-dark">
         <h1 className="text-text-main font-bold text-2xl mb-6">Logga in</h1>
         <form onSubmit={handleSubmit}>
-          <label
-            htmlFor="username"
-            className="block text-text-main font-medium mb-1"
-          >
-            Användarnamn
-          </label>
-          <input
+          <TextFormField
             id="username"
             name="username"
-            className="min-h-[44px] rounded-xl border border-surface-dark bg-background px-4 text-text-main focus:ring-2 focus:ring-primary focus:outline-none w-full mb-4"
-            required
+            label="Användarnamn"
+            value={username}
+            onChange={setUsername}
+            isRequired
+            autoComplete="username"
+            className="mb-4"
           />
 
-          <label
-            htmlFor="password"
-            className="block text-text-main font-medium mb-1"
-          >
-            Lösenord
-          </label>
-          <input
+          <TextFormField
             id="password"
             name="password"
             type="password"
-            className="min-h-[44px] rounded-xl border border-surface-dark bg-background px-4 text-text-main focus:ring-2 focus:ring-primary focus:outline-none w-full"
-            required
+            label="Lösenord"
+            value={password}
+            onChange={setPassword}
+            isRequired
+            autoComplete="current-password"
           />
 
           <button
