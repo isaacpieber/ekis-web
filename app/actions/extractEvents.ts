@@ -1,38 +1,8 @@
 "use server";
 
-import {
-  FunctionsFetchError,
-  FunctionsHttpError,
-  FunctionsRelayError,
-} from "@supabase/supabase-js";
-
 import { createClient } from "@/utils/supabase/server";
-import type {
-  Tables,
-  TablesInsert,
-} from "@/utils/supabase/database.types";
 
 const MAX_NEWSLETTER_LENGTH = 50_000;
-const extractionUnavailableMessage =
-  "AI är upptagen. Extraktionen har lagts i kö och kommer att bearbetas i bakgrunden.";
-
-type ExtractedEvent = TablesInsert<"school_events">;
-
-type ExtractionResponse = {
-  success: true;
-  events: ExtractedEvent[];
-};
-
-function isTransientFunctionError(error: unknown) {
-  if (error instanceof FunctionsHttpError) {
-    return error.context.status === 429 || error.context.status >= 500;
-  }
-
-  return (
-    error instanceof FunctionsFetchError ||
-    error instanceof FunctionsRelayError
-  );
-}
 
 export async function extractEvents(
   rawText: string,
@@ -87,57 +57,18 @@ export async function extractEvents(
     throw new Error("Only parents can extract and create school events.");
   }
 
-  const { data, error } = await supabase.functions.invoke<ExtractionResponse>(
-    "extract-events",
-    {
-      body: {
-        text: newsletterText,
-        source: selectedSource,
-        weekLabel: weekContext,
-      },
-    },
-  );
+  const { error: queueError } = await supabase.from("extraction_jobs").insert({
+    user_id: user.id,
+    raw_text: newsletterText,
+    source: selectedSource,
+    week_label: weekContext,
+  });
 
-  if (error) {
-    if (!isTransientFunctionError(error)) {
-      throw new Error(`Unable to extract school events: ${error.message}`);
-    }
-
-    const { error: queueError } = await supabase
-      .from("extraction_jobs")
-      .insert({
-        user_id: user.id,
-        raw_text: newsletterText,
-        source: selectedSource,
-        week_label: weekContext,
-      });
-
-    if (queueError) {
-      throw new Error(`Unable to queue school event extraction: ${queueError.message}`);
-    }
-
-    return {
-      status: "queued" as const,
-      message: extractionUnavailableMessage,
-    };
+  if (queueError) {
+    throw new Error(
+      `Unable to queue school event extraction: ${queueError.message}`,
+    );
   }
 
-  if (!data?.success) {
-    throw new Error("The extraction service returned an invalid response.");
-  }
-
-  if (data.events.length === 0) {
-    return { success: true as const, events: [] as Tables<"school_events">[] };
-  }
-
-  const { data: insertedEvents, error: insertError } = await supabase
-    .from("school_events")
-    .insert(data.events)
-    .select();
-
-  if (insertError) {
-    throw new Error(`Unable to save school events: ${insertError.message}`);
-  }
-
-  return { success: true as const, events: insertedEvents };
+  return { status: "queued" as const };
 }
